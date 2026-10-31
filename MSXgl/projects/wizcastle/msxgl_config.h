@@ -32,13 +32,13 @@
 
 #define VDP_USE_MODE_T1				TRUE	// Screen 0 Width 40
 #define VDP_USE_MODE_G1				FALSE
-#define VDP_USE_MODE_G2				FALSE
+#define VDP_USE_MODE_G2				TRUE	// Screen 2 (MSX1 256x192 Graphic 2)
 #define VDP_USE_MODE_MC				FALSE
 #define VDP_USE_MODE_T2				TRUE	// Screen 0 Width 80
 #define VDP_USE_MODE_G3				FALSE
 #define VDP_USE_MODE_G4				TRUE	// Screen 5
 #define VDP_USE_MODE_G5				FALSE
-#define VDP_USE_MODE_G6				FALSE
+#define VDP_USE_MODE_G6				TRUE	// Screen 7 (MSX2/2+ 512x212 Graphic 6)
 #define VDP_USE_MODE_G7				TRUE	// Screen 8, 10, 11 & 12 (MSX2+)
 
 #define VDP_USE_VRAM16K				TRUE

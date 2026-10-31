@@ -62,7 +62,18 @@ extern WizHardwareInfo g_HwInfo;
 // Probe all MSX hardware and OS components and populate g_HwInfo
 void Wiz_DetectHardware(void);
 
-// Print itemized hardware compatibility report to MSX-DOS console
+// Backup the initial MSX-DOS text font from VRAM before entering graphics modes
+void Wiz_BackupTextFont(void);
+
+// Restore MSX-DOS text mode and VRAM font cleanly before exiting to DOS
+void Wiz_RestoreTextMode(void);
+
+// Render the graphical hardware diagnostic screen:
+//  - SCREEN 2 (256x192) on MSX1 (TMS9918A)
+//  - SCREEN 7 (512x212) on MSX2 / MSX2+ / MSX turbo R (V9938 / V9958)
+void Wiz_ShowGraphicalDiagnostic(void);
+
+// Print itemized hardware compatibility report to MSX-DOS console (optional text summary)
 void Wiz_PrintHardwareReport(void);
 
 // Play a short test chord on detected sound chips (PSG + FM + SCC)

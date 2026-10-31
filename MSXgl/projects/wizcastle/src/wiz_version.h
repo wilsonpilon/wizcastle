@@ -11,6 +11,6 @@
 #pragma once
 
 #define WIZ_VERSION_MAJOR  1
-#define WIZ_VERSION_MINOR  2
-#define WIZ_VERSION_STR    "1.2"
-#define WIZ_VERSION_TITLE  "Foundation & Hardware Diagnostic Stub"
+#define WIZ_VERSION_MINOR  3
+#define WIZ_VERSION_STR    "1.3"
+#define WIZ_VERSION_TITLE  "Graphical Hardware Diagnostic Dashboard (SC2/SC7)"

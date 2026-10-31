@@ -10,6 +10,25 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [1.3] - 2026-10-31 — *Graphical Hardware Diagnostic Dashboard (SCREEN 7 on MSX2/2+ & SCREEN 2 on MSX1)*
+
+### Added
+- **`SCREEN 7` High-Resolution Graphical Diagnostic Dashboard (`src/wiz_hwcheck.c`):**
+  - Automatically rendered in **512×212, 16 colors (`VDP_MODE_SCREEN7`)** when launched on **MSX 2**, **MSX 2+**, or **MSX turbo R** (`V9938`/`V9958`).
+  - Features a royal-blue and gold header banner, 7 alternating slate/black inspection cards, and custom **20×12 pixel graphical status badges**:
+    - **Green Checkmark (`[✓]`):** Requirement satisfied (`PASS`).
+    - **Red Cross (`[✗]`):** Critical requirement missing (`FAIL`).
+    - **Yellow Exclamation (`[!]`):** Recommended feature fallback active (`WARN`).
+    - **Cyan Info (`[i]`):** Optional enhancement not detected (`INFO`).
+  - Color-coded concise labels and hardware metrics (`MSX-DOS`, `MACHINE`, `VIDEO`, `MAPPER`, `PSG`, `FM OPLL`, `SCC`) with a full-width verdict banner (`READY TO PLAY`, `COMPATIBLE (SCREEN 8)`, or `INCOMPATIBLE HARDWARE`) and interactive command footer (`[T] Video/Sound Test`, `[S] Sound Only`, `[Q/ESC] Exit to DOS`).
+- **`SCREEN 2` MSX 1 Graphical Diagnostic Fallback (`src/wiz_hwcheck.c`):**
+  - Automatically rendered in **256×192 (`VDP_MODE_SCREEN2`, 32×24 tiles)** if launched on an **MSX 1 (`TMS9918A`)**.
+  - Uploads custom 8×8 tile patterns (`0x80` = Green Checkmark `✓`, `0x81` = Red Cross `✗`, `0x82` = Yellow Exclamation `!`, `0x83` = Solid Frame Bar) across all three `SCREEN 2` pattern/color banks with per-row color attributes.
+- **Early `SCREEN 0` Text Font Preservation (`Wiz_BackupTextFont` / `Wiz_RestoreTextMode`):**
+  - Saves the 2,048-byte `SCREEN 0` font from VRAM `0x1000` into upper VRAM (`0x1F000`, Page 1 bottom) before switching to `SCREEN 7`, and cleanly restores `SCREEN 0` (80 columns) when exiting back to MSX-DOS.
+
+---
+
 ## [1.2] - 2026-10-31 — *Fix SCREEN 12 / SCREEN 8 Visual & Audio Test and VRAM Font Restore*
 
 ### Fixed
