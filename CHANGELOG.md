@@ -10,6 +10,20 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [1.4] - 2026-10-31 — *Universal Boot Disk (MSX-DOS 2 + MSX-DOS 1 + MSX Disk-BASIC Fallback)*
+
+### Added
+- **Dual MSX-DOS 1 + MSX-DOS 2 Bootable Disk (`project_config.js`, `emul/dsk/DOS2_wizcastle.dsk`):**
+  - Bundled `MSXDOS.SYS` and `COMMAND.COM` (MSX-DOS 1.11) alongside `MSXDOS2.SYS` and `COMMAND2.COM` (MSX-DOS 2) on the same 720 KB `.DSK` image.
+  - Because the MSX-DOS boot sector invokes Disk-ROM BDOS `0Fh` (`FOPEN`) to locate `MSXDOS.SYS` when no MSX-DOS 2 ROM is present, any MSX 1 / MSX 2 / MSX 2+ machine with only an MSX-DOS 1 Disk-ROM (`>= 64 KB` RAM) now boots directly into MSX-DOS 1 -> `AUTOEXEC.BAT` -> `WIZCASTLE.COM` and displays the graphical compatibility dashboard (`SCREEN 2` on MSX 1, `SCREEN 7` on MSX 2/2+) instead of dropping to MSX-BASIC.
+- **MSX Disk-BASIC Fallback (`emul/AUTOEXEC.BAS`):**
+  - Added `AUTOEXEC.BAS` to the disk so that even an MSX 1 with `< 64 KB` RAM (e.g., 16 KB or 32 KB RAM where the Disk-ROM cannot load `MSXDOS.SYS` into Page 0 and falls back to Disk-BASIC) automatically runs `AUTOEXEC.BAS` and displays a formatted compatibility report explaining the missing hardware/OS requirements.
+- **Cross-DOS `AUTOEXEC.BAT` & `W40`/`W80` Font Backup (`src/wiz_hwcheck.c`):**
+  - Simplified `AUTOEXEC.BAT` to use `REM` instead of MSX-DOS 2-specific internal commands (`COLOR`, `ECHO`), eliminating `Bad command or file name` messages when booting under MSX-DOS 1 `COMMAND.COM`.
+  - Updated `Wiz_BackupTextFont()` and `Wiz_RestoreTextMode()` to detect whether `SCREEN 0` started in 40-column (`0x0800`) or 80-column (`0x1000`) mode via `LINL40` (`0xF3AE`) and store the 2,048-byte font backup at `0xD800` in VRAM Page 0 (compatible with both 64 KB VRAM MSX2 and 128 KB VRAM MSX2+ machines).
+
+---
+
 ## [1.3] - 2026-10-31 — *Graphical Hardware Diagnostic Dashboard (SCREEN 7 on MSX2/2+ & SCREEN 2 on MSX1)*
 
 ### Added

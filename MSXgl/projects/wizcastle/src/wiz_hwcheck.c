@@ -180,17 +180,18 @@ static void OPLL_WriteReg(u8 reg, u8 value)
 }
 
 //-----------------------------------------------------------------------------
-// Backup 2048-byte SCREEN 0 Font from VRAM Page 0 (0x1000) to Page 1 (0x8000)
+// Backup 2048-byte SCREEN 0 Font from VRAM Page 0 (0x0800 W40 or 0x1000 W80) to 0xD800
 void Wiz_BackupTextFont(void)
 {
-	if (g_FontBackedUp || g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A || g_HwInfo.vramSizeKB < 128)
+	if (g_FontBackedUp || g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A)
 		return;
 
+	u16 srcAddr = (PEEK(0xF3AE) > 40) ? 0x1000 : 0x0800;
 	for (u8 block = 0; block < 8; ++block)
 	{
 		u16 off = (u16)block * 256;
-		VDP_ReadVRAM_128K(0x1000 + off, 0, g_FontBackup, 256);
-		VDP_WriteVRAM_128K(g_FontBackup, 0x8000 + off, 1, 256);
+		VDP_ReadVRAM_128K(srcAddr + off, 0, g_FontBackup, 256);
+		VDP_WriteVRAM_128K(g_FontBackup, 0xD800 + off, 0, 256);
 	}
 	g_FontBackedUp = TRUE;
 }
@@ -204,6 +205,7 @@ void Wiz_RestoreTextMode(void)
 		VDP_SetMode(VDP_MODE_SCREEN0_W40);
 		VDP_SetColor(0xF1);
 		VDP_FillVRAM_16K(' ', 0x0000, 960);
+		VDP_FillVRAM_16K(0x00, 0x0800, 2048);
 		// Reload ASCII font into 0x0800 for SCREEN 0 W40
 		VDP_WriteVRAM_16K(g_Font_MGL_Sample6 + 4, 0x0800 + (32 * 8), 96 * 8);
 		DOS_ClearScreen();
@@ -213,18 +215,33 @@ void Wiz_RestoreTextMode(void)
 	VDP_CommandWait();
 	VDP_SetYJK(VDP_YJK_OFF);
 	VDP_SetPage(0);
-	VDP_SetMode(VDP_MODE_SCREEN0_W80);
-	VDP_SetDefaultPalette();
-	VDP_SetColor(0xF0);
-	VDP_FillVRAM_128K(' ', 0x0000, 0, 2048); // Clear Name Table
-	VDP_FillVRAM_128K(0x00, 0x0800, 0, 512); // Clear Blink Table
+
+	bool useW80 = (PEEK(0xF3AE) > 40) || (g_HwInfo.dosVer >= DOS_VER_2);
+	if (useW80)
+	{
+		POKE(0xF3AE, 80);
+		VDP_SetMode(VDP_MODE_SCREEN0_W80);
+		VDP_SetDefaultPalette();
+		VDP_SetColor(0xF0);
+		VDP_FillVRAM_128K(' ', 0x0000, 0, 2048); // Clear Name Table
+		VDP_FillVRAM_128K(0x00, 0x0800, 0, 512); // Clear Blink Table
+	}
+	else
+	{
+		VDP_SetMode(VDP_MODE_SCREEN0_W40);
+		VDP_SetDefaultPalette();
+		VDP_SetColor(0xF0);
+		VDP_FillVRAM_128K(' ', 0x0000, 0, 1024); // Clear Name Table
+	}
+
 	if (g_FontBackedUp)
 	{
+		u16 dstAddr = useW80 ? 0x1000 : 0x0800;
 		for (u8 block = 0; block < 8; ++block)
 		{
 			u16 off = (u16)block * 256;
-			VDP_ReadVRAM_128K(0x8000 + off, 1, g_FontBackup, 256);
-			VDP_WriteVRAM_128K(g_FontBackup, 0x1000 + off, 0, 256);
+			VDP_ReadVRAM_128K(0xD800 + off, 0, g_FontBackup, 256);
+			VDP_WriteVRAM_128K(g_FontBackup, dstAddr + off, 0, 256);
 		}
 	}
 	DOS_ClearScreen();

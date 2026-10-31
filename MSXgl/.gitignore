@@ -43,6 +43,7 @@ dos2
 !/projects/wizcastle/out
 !/projects/wizcastle/out/wizcastle.com
 !/projects/wizcastle/emul
+!/projects/wizcastle/emul/AUTOEXEC.BAS
 !/projects/wizcastle/emul/dos2
 !/projects/wizcastle/emul/dos2/*
 !/projects/wizcastle/emul/dsk

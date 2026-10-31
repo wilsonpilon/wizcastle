@@ -66,6 +66,16 @@ DOSParseArg = false;
 //-- Size of the final disk (.DSK file). Can be "360K" or "720K" (string)
 DiskSize = "720K";
 
+//-- Additional files to copy to the bootable DSK image (array)
+//   Includes MSX-DOS 1 system files (MSXDOS.SYS + COMMAND.COM) alongside MSX-DOS 2
+//   (MSXDOS2.SYS + COMMAND2.COM) and an MSX-BASIC fallback (AUTOEXEC.BAS) so that
+//   machines with only MSX-DOS 1 or <64KB RAM also boot into the diagnostic report!
+DiskFiles = [
+	`${MSXDOS}MSXDOS.SYS`,
+	`${MSXDOS}COMMAND.COM`,
+	`${ProjDir}emul/AUTOEXEC.BAS`
+];
+
 //*******************************************************************************
 // SIGNATURE SETTINGS
 //*******************************************************************************
