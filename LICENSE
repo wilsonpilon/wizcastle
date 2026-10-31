@@ -1,0 +1,58 @@
+# Licensing & Attribution — The Wizard's Castle (MSX2+ Enhanced Port)
+
+This repository combines original MSX2+ game code and documentation with third-party open-source libraries, public-domain reference code, and open-licensed graphical assets.
+
+---
+
+## 1. Combined Work & Repository License (CC BY-SA 4.0)
+
+As a combined work linking against and distributing **MSXgl**, this repository and its compiled binary distributions (`WIZCASTLE.COM`, `WIZDATA.DAT`, and `.DSK` images) are licensed under the **Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)**.
+
+Additionally, the original C source code and documentation written specifically for the MSX2+ port (located in `MSXgl/projects/wizcastle/` and `docs/`) are dual-licensed under the **MIT License** and **CC BY-SA 4.0**, allowing you to reuse the game's C source code on its own under either license.
+
+---
+
+## 2. Third-Party Credits & Component Licenses
+
+### A. Original Game Concept (1980)
+- **Title:** *The Wizard's Castle*
+- **Author:** Joseph R. Power
+- **Publication:** *Recreational Computing* Magazine (July/August 1980, Vol. 9, No. 1)
+
+### B. WinWiz C++ Port (`winwiz/`) — CC0 1.0 Universal (Public Domain)
+- **Author:** Daniel D. Miller
+- **License:** [CC0 1.0 Universal (Public Domain Dedication)](winwiz/LICENSE.txt)
+- **Summary:** The author dedicated the WinWiz C++ source code to the public domain worldwide, waiving all copyright and related rights.
+
+### C. MSXgl Library (`MSXgl/`) — CC BY-SA 4.0
+- **Author:** Guillaume "Aoineko" Blanchard (2022–2025)
+- **License:** [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](MSXgl/LICENSE.md)
+- **Project URL:** https://github.com/aoineko-fr/MSXgl
+
+### D. Graphical Sprites (`winwiz/tiles32.png`) — NetHack General Public License
+- **Authors:** M. Stephenson & the NetHack DevTeam
+- **License:** NetHack General Public License (permissive open-source license derived from the Bison license; redistribution and modification are permitted provided copyright notices are retained).
+
+---
+
+## 3. Creative Commons Attribution-ShareAlike 4.0 International (Summary & Link)
+
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format for any purpose, even commercially.
+- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially.
+
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- **ShareAlike** — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original (or a Creative Commons Compatible License such as **GNU GPLv3**).
+
+Full legal text: https://creativecommons.org/licenses/by-sa/4.0/legalcode (also available locally in [`MSXgl/LICENSE.md`](MSXgl/LICENSE.md)).
+
+---
+
+## 4. MIT License (Applicable to `MSXgl/projects/wizcastle/` and `docs/` standalone source)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of the standalone source code and documentation in `MSXgl/projects/wizcastle/` and `docs/` (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

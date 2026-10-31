@@ -1,0 +1,149 @@
+#*************************************************************************************
+#  makefile for winwiz
+#*************************************************************************************
+USE_DEBUG = NO
+USE_UNICODE = YES
+USE_64BIT = NO
+USE_CLANG = NO
+USE_CYGWIN = YES
+
+include der_libs\tool_select.mak
+include der_libs\release.mak
+
+ifeq ($(USE_DEBUG),YES)
+CFLAGS=-Wall -O -g -mwindows 
+LFLAGS=
+else
+CFLAGS=-Wall -O2 -Weffc++ -c 
+LFLAGS=-s
+endif
+CFLAGS += -Wno-write-strings
+
+ifeq ($(USE_UNICODE),YES)
+CFLAGS += -DUNICODE -D_UNICODE
+LFLAGS += -dUNICODE -d_UNICODE
+LiFLAGS += -DUNICODE -D_UNICODE
+IFLAGS += -DUNICODE -D_UNICODE
+else
+CFLAGS += -Wno-stringop-truncation
+CFLAGS += -Wno-conversion-null
+endif
+
+ifeq ($(USE_CLANG),YES)
+CFLAGS += -DUSING_CLANG
+endif
+LFLAGS += -mwindows 
+
+ifeq ($(USE_STATIC),YES)
+LFLAGS += -static
+endif
+
+IFLAGS += -Ider_libs
+
+# link library files
+LiFLAGS += -Ider_libs
+CFLAGS += -Ider_libs
+
+# separate local source files from library files,
+# so that wc operation is more appropriate.
+CBASE=winwiz.cpp keyboard.cpp wfuncs.cpp about.cpp \
+CastleInit.cpp initscrn.cpp combat.cpp vendor.cpp loadhelp.cpp 
+
+CSRC = $(CBASE)
+
+CSRC+=der_libs/common_funcs.cpp \
+der_libs/common_win.cpp \
+der_libs/winmsgs.cpp \
+der_libs/statbar.cpp \
+der_libs/cterminal.cpp \
+der_libs/terminal.cpp \
+der_libs/tooltips.cpp \
+der_libs/hyperlinks.cpp \
+der_libs/vlistview.cpp 
+
+LIBS= -lgdi32 -lcomdlg32 -lhtmlhelp -lolepro32 -lole32 -luuid
+
+# none of the BMP/JPG code is relevant, if UNICODE is defined
+ifeq ($(USE_UNICODE), YES)
+CSRC+=der_libs/gdi_plus.cpp der_libs/gdiplus_setup.cpp
+LIBS += -lgdiplus 
+IMAGES=tiles32.png images.png
+endif
+
+OBJS = $(CSRC:.cpp=.o) rc.o
+
+BASE=winwiz
+BINX=$(BASE).exe
+
+DIST_ZIP := $(BASE)V$(VERSION).zip
+
+.PHONY: dist
+#************************************************************
+%.o: %.cpp
+	$(TOOLS)\$(GNAME) $(CFLAGS) $< -o $@
+
+#************************************************************
+all: $(BINX)
+
+clean:
+	rm -vf $(BINX) $(OBJS) *.zip *.bak *~
+
+dist:
+	rm -f $(BASE).zip
+	zip $(DIST_ZIP) *.exe $(BASE).chm $(IMAGES) LICENSE.txt readme.md CHANGELOG.md
+
+wc:
+	wc -l $(CBASE) *.rc
+
+cppc:
+	cmd /C "cppcheck --project=compile_commands.json --check-level=exhaustive --enable=all --std=c++14 --suppressions-list=./.suppress.cppcheck"
+
+check:
+	cmd /C "d:\llvm\bin\clang-tidy.exe $(CSRC)"
+
+clint:
+	cmd /C "python ..\ClaudeLint.py --exclude der_libs"
+	
+depend:
+	makedepend $(IFLAGS) $(CSRC)
+
+#************************************************************
+$(BINX): $(OBJS)
+	$(TOOLS)/$(GNAME) $(OBJS) $(LFLAGS) -o $(BINX) $(LIBS) 
+
+# note: though all other utilities can accept forward slash in paths,
+#       tdm32's windres cannot... 
+rc.o: winwiz.rc 
+	$(TOOLS)/$(WRNAME) $< -O COFF -o $@
+
+# DO NOT DELETE
+
+winwiz.o: resource.h version.h der_libs/common.h der_libs/commonw.h
+winwiz.o: der_libs/statbar.h der_libs/cterminal.h der_libs/vlistview.h
+winwiz.o: der_libs/terminal.h der_libs/winmsgs.h wizard.h keywin32.h
+winwiz.o: der_libs/tooltips.h der_libs/gdiplus_setup.h
+keyboard.o: der_libs/common.h wizard.h keywin32.h
+wfuncs.o: resource.h der_libs/common.h der_libs/commonw.h wizard.h keywin32.h
+wfuncs.o: der_libs/terminal.h der_libs/gdi_plus.h
+about.o: resource.h version.h der_libs/common.h wizard.h
+about.o: der_libs/hyperlinks.h
+CastleInit.o: der_libs/common.h wizard.h
+initscrn.o: resource.h der_libs/common.h der_libs/commonw.h wizard.h
+combat.o: der_libs/common.h wizard.h keywin32.h
+vendor.o: resource.h der_libs/common.h wizard.h
+loadhelp.o: der_libs/common.h
+der_libs/common_funcs.o: der_libs/common.h
+der_libs/common_win.o: der_libs/common.h der_libs/commonw.h
+der_libs/statbar.o: der_libs/common.h der_libs/commonw.h der_libs/statbar.h
+der_libs/cterminal.o: der_libs/common.h der_libs/commonw.h
+der_libs/cterminal.o: der_libs/cterminal.h der_libs/vlistview.h
+der_libs/terminal.o: der_libs/common.h der_libs/commonw.h
+der_libs/terminal.o: der_libs/cterminal.h der_libs/vlistview.h
+der_libs/terminal.o: der_libs/terminal.h der_libs/winmsgs.h
+der_libs/tooltips.o: der_libs/iface_32_64.h der_libs/common.h
+der_libs/tooltips.o: der_libs/tooltips.h
+der_libs/hyperlinks.o: der_libs/iface_32_64.h der_libs/hyperlinks.h
+der_libs/vlistview.o: der_libs/common.h der_libs/commonw.h
+der_libs/vlistview.o: der_libs/vlistview.h
+der_libs/gdi_plus.o: der_libs/common.h der_libs/gdi_plus.h
+der_libs/gdiplus_setup.o: der_libs/gdi_plus.h

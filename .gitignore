@@ -1,0 +1,24 @@
+# OS & IDE files
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db
+*.code-workspace
+
+# Intermediate compiler/linker debug files (keep .com and .dsk binaries tracked!)
+*.map
+*.noi
+*.cdb
+*.adb
+*.rel
+*.lst
+*.sym
+*.lk
+*.ihx
+MSXgl/projects/wizcastle/out/*.asm
+MSXgl/projects/wizcastle/out/*.lib
+MSXgl/projects/wizcastle/out/*.h
+
+# Exclude huge unused static C++ libs / Linux binaries >50MB in MSXgl/tools
+MSXgl/tools/MSXtk/Freeimage/*.lib
+MSXgl/tools/build/Node/node

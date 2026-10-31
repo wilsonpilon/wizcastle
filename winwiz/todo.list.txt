@@ -1,0 +1,8 @@
+ToDo list
+=========
+
+- Impatient vendors is not yet implemented
+
+- Implement some way to track possessions of monsters/vendors,
+  so if we trade/bribe gems to them, we can get them back later.
+
