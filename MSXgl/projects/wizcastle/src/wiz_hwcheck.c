@@ -1,5 +1,5 @@
 // ____________________________
-// ██▀▀█▀▀██▀▀▀▀▀▀▀█▀▀█        │   ▄▄▄                ▄▄
+// ██▀▀█▀▀██▀▀▀▀▀▀▀█▀▀▀▀        │   ▄▄▄                ▄▄
 // ██  ▀  █▄  ▀██▄ ▀ ▄█ ▄▀▀ █  │  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███
 // █  █ █  ▀▀  ▄█  █  █ ▀▄█ █▄ │  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀────────┘                 ▀▀
@@ -25,6 +25,7 @@
 WizHardwareInfo g_HwInfo;
 static c8 g_LineBuf[96];
 static c8 g_SlotBuf[8];
+static u8 g_FontBackup[256]; // Chunk buffer for backing up/restoring SCREEN 0 font in VRAM Page 1
 
 // Minimum and recommended Mapper RAM segments (16 KB each)
 #define MIN_TOTAL_SEGS     16   // 256 KB minimum total Mapped RAM
@@ -42,6 +43,20 @@ static const i8 g_SccTestWave[32] = {
 //=============================================================================
 // HELPER FUNCTIONS
 //=============================================================================
+
+//-----------------------------------------------------------------------------
+// Read a single key from MSX-DOS console without echoing to screen
+c8 Wiz_GetKeyNoEcho(void) __NAKED
+{
+__asm
+	push	ix
+	ld		c, #DOS_FUNC_DIRIN
+	call	0x0005
+	pop		ix
+	ei
+	ret
+__endasm;
+}
 
 //-----------------------------------------------------------------------------
 // Format an MSX Slot ID (ExxxSSPP) as "P" or "P-S"
@@ -64,12 +79,50 @@ static const c8* FormatSlotId(u8 slot)
 }
 
 //-----------------------------------------------------------------------------
-// Busy-wait a given number of VBlank interrupts
+// Wait a given number of VBlank frames by polling V9958 S#2 Vertical Retrace
+// (100% immune to Z80 DI/EI state and includes hardware safety timeout)
 static void WaitFrames(u8 frames)
 {
 	for (u8 i = 0; i < frames; ++i)
 	{
-		Halt();
+		u16 timeout = 8000;
+		while ((VDP_ReadStatus(2) & 0x40) && --timeout) {}
+		timeout = 30000;
+		while (!(VDP_ReadStatus(2) & 0x40) && --timeout) {}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Write to YM2413 (MSX-MUSIC OPLL) with mandatory hardware wait cycles
+static void OPLL_WriteReg(u8 reg, u8 value)
+{
+	g_MSXMusic_IndexPort = reg;
+	for (volatile u8 d = 0; d < 4; ++d) {}
+	g_MSXMusic_DataPort = value;
+	for (volatile u8 d = 0; d < 24; ++d) {}
+}
+
+//-----------------------------------------------------------------------------
+// Backup 2048-byte SCREEN 0 Font from VRAM Page 0 (0x1000) to Page 1 (0x8000)
+static void BackupScreen0Font(void)
+{
+	for (u8 block = 0; block < 8; ++block)
+	{
+		u16 off = (u16)block * 256;
+		VDP_ReadVRAM_128K(0x1000 + off, 0, g_FontBackup, 256);
+		VDP_WriteVRAM_128K(g_FontBackup, 0x8000 + off, 1, 256);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Restore 2048-byte SCREEN 0 Font from VRAM Page 1 (0x8000) to Page 0 (0x1000)
+static void RestoreScreen0Font(void)
+{
+	for (u8 block = 0; block < 8; ++block)
+	{
+		u16 off = (u16)block * 256;
+		VDP_ReadVRAM_128K(0x8000 + off, 1, g_FontBackup, 256);
+		VDP_WriteVRAM_128K(g_FontBackup, 0x1000 + off, 0, 256);
 	}
 }
 
@@ -122,6 +175,7 @@ void Wiz_DetectHardware(void)
 	// 2. Detect MSX Generation & VBlank Frequency (from Main-ROM via inter-slot read)
 	g_HwInfo.msxVersion = Sys_GetMSXVersion();
 	g_HwInfo.is50Hz     = Sys_Is50Hz();
+	EnableInterrupt(); // DOS_InterSlotRead disables interrupts via RDSLT; re-enable!
 
 	if (g_HwInfo.msxVersion < MSXVER_2P)
 		g_HwInfo.failCount++;
@@ -193,11 +247,20 @@ void Wiz_DetectHardware(void)
 	g_HwInfo.fmType = MSXMusic_Initialize();
 	g_HwInfo.fmSlot = MSXMusic_GetSlotId();
 	if (g_HwInfo.fmType == MSXMUSIC_NOTFOUND)
+	{
 		g_HwInfo.warnCount++;
+	}
+	else
+	{
+		// Ensure OPLL I/O ports 7Ch/7Dh are enabled in 7FF6h for both internal & external FM
+		u8 fmpacEnable = BIOS_InterSlotRead(g_HwInfo.fmSlot, 0x7FF6);
+		BIOS_InterSlotWrite(g_HwInfo.fmSlot, 0x7FF6, fmpacEnable | 0x01);
+	}
 
 	// 7. Detect Konami SCC / SCC+
 	g_HwInfo.hasSCC  = SCC_Initialize();
 	g_HwInfo.sccSlot = g_SCC_SlotId;
+	EnableInterrupt();
 
 	g_HwInfo.isCompatible = (g_HwInfo.failCount == 0);
 }
@@ -309,44 +372,41 @@ void Wiz_PrintHardwareReport(void)
 	else
 	{
 		String_Format(g_LineBuf,
-			" [FAIL] 4. Memory Mapper  : 64 KB Standard RAM / No DOS2 Mapper Detected\r\n$");
+			" [FAIL] 4. Memory Mapper  : No DOS2 Memory Mapper Detected (64 KB only)\r\n$");
 	}
 	DOS_StringOutput(g_LineBuf);
 
-	// --- Item 5: PSG ---
+	// --- Item 5: PSG (AY-3-8910 / YM2149) ---
 	if (g_HwInfo.hasPSG)
 	{
-		String_Format(g_LineBuf,
-			" [ OK ] 5. Audio PSG      : AY-3-8910 / YM2149 Detected (3ch + ayFX SFX)\r\n$");
+		DOS_StringOutput(" [ OK ] 5. Audio PSG      : AY-3-8910 / YM2149 Detected (3ch Tone + SFX)\r\n$");
 	}
 	else
 	{
-		String_Format(g_LineBuf,
-			" [FAIL] 5. Audio PSG      : PSG Not Responding on Ports A0h-A2h\r\n$");
+		DOS_StringOutput(" [FAIL] 5. Audio PSG      : PSG Not Responding on Ports A0h-A2h\r\n$");
 	}
-	DOS_StringOutput(g_LineBuf);
 
 	// --- Item 6: FM / MSX-MUSIC (YM2413 / OPLL) ---
 	if (g_HwInfo.fmType == MSXMUSIC_INTERNAL)
 	{
 		String_Format(g_LineBuf,
-			" [ OK ] 6. Audio FM (OPLL): Internal MSX-MUSIC YM2413 (Slot %s, 9ch FM)\r\n$",
+			" [ OK ] 6. Audio FM       : Internal MSX-MUSIC YM2413 (Slot %s, 9ch FM)\r\n$",
 			FormatSlotId(g_HwInfo.fmSlot));
 	}
 	else if (g_HwInfo.fmType == MSXMUSIC_EXTERNAL)
 	{
 		String_Format(g_LineBuf,
-			" [ OK ] 6. Audio FM (OPLL): External FM-PAC / YM2413 (Slot %s, 9ch FM)\r\n$",
+			" [ OK ] 6. Audio FM       : External FM-PAC YM2413 (Slot %s, 9ch FM)\r\n$",
 			FormatSlotId(g_HwInfo.fmSlot));
 	}
 	else
 	{
 		String_Format(g_LineBuf,
-			" [WARN] 6. Audio FM (OPLL): MSX-MUSIC Not Found (Will use PSG-only BGM)\r\n$");
+			" [WARN] 6. Audio FM       : MSX-MUSIC Not Found (Music falls back to PSG)\r\n$");
 	}
 	DOS_StringOutput(g_LineBuf);
 
-	// --- Item 7: Konami SCC ---
+	// --- Item 7: Konami SCC / SCC+ ---
 	if (g_HwInfo.hasSCC)
 	{
 		String_Format(g_LineBuf,
@@ -392,25 +452,29 @@ void Wiz_PlayTestChord(void)
 		PSG_SetTone(PSG_CHANNEL_A, 428);
 		PSG_SetTone(PSG_CHANNEL_B, 339);
 		PSG_SetTone(PSG_CHANNEL_C, 285);
-		PSG_SetVolume(PSG_CHANNEL_A, 11);
-		WaitFrames(6);
-		PSG_SetVolume(PSG_CHANNEL_B, 11);
-		WaitFrames(6);
-		PSG_SetVolume(PSG_CHANNEL_C, 11);
+		PSG_SetVolume(PSG_CHANNEL_A, 12);
+		PSG_SetVolume(PSG_CHANNEL_B, 0);
+		PSG_SetVolume(PSG_CHANNEL_C, 0);
+		WaitFrames(8);
+
+		PSG_SetVolume(PSG_CHANNEL_B, 12);
+		WaitFrames(8);
+
+		PSG_SetVolume(PSG_CHANNEL_C, 12);
 	}
 
 	// 2. MSX-MUSIC (YM2413 / OPLL) FM Chord if detected
 	if (g_HwInfo.fmType != MSXMUSIC_NOTFOUND)
 	{
 		// Instrument #3 (Piano) + Volume 2 on FM Channel 0 & 1
-		MSXMusic_SetRegister(0x30, 0x32);
-		MSXMusic_SetRegister(0x31, 0x32);
+		OPLL_WriteReg(0x30, 0x32);
+		OPLL_WriteReg(0x31, 0x32);
 		// F-Number for C4 (0xAC, Block 4, Key-On = 0x10)
-		MSXMusic_SetRegister(0x10, 0xAC);
-		MSXMusic_SetRegister(0x20, 0x18);
+		OPLL_WriteReg(0x10, 0xAC);
+		OPLL_WriteReg(0x20, 0x18);
 		// F-Number for G4 (0x02, Block 5, Key-On = 0x10)
-		MSXMusic_SetRegister(0x11, 0x02);
-		MSXMusic_SetRegister(0x21, 0x1B);
+		OPLL_WriteReg(0x11, 0x02);
+		OPLL_WriteReg(0x21, 0x1B);
 	}
 
 	// 3. Konami SCC Wavetable tone if detected
@@ -422,7 +486,7 @@ void Wiz_PlayTestChord(void)
 		SCC_SetMixer(0x01);
 	}
 
-	WaitFrames(25);
+	WaitFrames(30);
 
 	// Mute all sound chips cleanly
 	if (g_HwInfo.hasPSG)
@@ -431,9 +495,10 @@ void Wiz_PlayTestChord(void)
 	}
 	if (g_HwInfo.fmType != MSXMUSIC_NOTFOUND)
 	{
-		MSXMusic_SetRegister(0x20, 0x00);
-		MSXMusic_SetRegister(0x21, 0x00);
-		MSXMusic_Mute();
+		OPLL_WriteReg(0x20, 0x00);
+		OPLL_WriteReg(0x21, 0x00);
+		for (u8 ch = 0; ch < 9; ++ch)
+			OPLL_WriteReg(0x20 + ch, 0x00);
 	}
 	if (g_HwInfo.hasSCC)
 	{
@@ -442,44 +507,88 @@ void Wiz_PlayTestChord(void)
 }
 
 //-----------------------------------------------------------------------------
+// Encode a 4-pixel YJK group and write directly to SCREEN 12 VRAM (Page 0)
+static void DrawYJKGroup(u16 vramAddr, u8 luma, i8 j, i8 k)
+{
+	u8 y5 = (luma & 0x1F) << 3;
+	u8 uJ = (u8)j & 0x3F;
+	u8 uK = (u8)k & 0x3F;
+	u8 pkt[4];
+	pkt[0] = y5 | (uK & 0x07);
+	pkt[1] = y5 | ((uK >> 3) & 0x07);
+	pkt[2] = y5 | (uJ & 0x07);
+	pkt[3] = y5 | ((uJ >> 3) & 0x07);
+	VDP_WriteVRAM_128K(pkt, vramAddr, 0, 4);
+}
+
+//-----------------------------------------------------------------------------
 // Run interactive SCREEN 12 + SCREEN 8 + Audio visual test
 void Wiz_RunHardwareVisualTest(void)
 {
+	// 0. Backup current SCREEN 0 (Width 80) Font from VRAM Page 0 (0x1000) to Page 1 (0x8000)
+	BackupScreen0Font();
+
 	// --- STEP 1: Test MSX2+ SCREEN 12 (256x212, 19,268 YJK colors) ---
 	VDP_SetMode(VDP_MODE_SCREEN12);
+	// Compatibility note: MSXgl Print module switches on VDP_MODE_GRAPHIC7 (8-bpp layout),
+	// whereas SCREEN 12 is GRAPHIC7 with VDP R#25 YJK=1 enabled.
+	g_VDP_Data.Mode = VDP_MODE_GRAPHIC7;
+
 	VDP_EnableSprite(FALSE);
+	VDP_SetPage(0);
 	VDP_SetColor(0x00);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x00);
 	VDP_CommandWait();
 
-	// Draw colorful YJK gradient bars across the screen
-	for (u8 y = 24; y < 168; y += 4)
+	// Draw 4 smooth YJK color gradient bands (Red, Green, Blue, Rainbow Chroma)
+	// First draw the first scanline of each band, then use VDP YMMM to replicate vertically!
+	for (u8 band = 0; band < 4; ++band)
 	{
+		u16 baseY = 28 + (u16)band * 36;
+		u16 rowAddr = baseY * 256;
 		for (u16 x = 0; x < 256; x += 4)
 		{
-			u8 luma = (u8)((x >> 3) & 0x1F);
-			u8 chroma = (u8)((y >> 3) & 0x07);
-			u8 yjkByte = (luma << 3) | chroma;
-			VDP_CommandHMMV(x, y, 4, 4, yjkByte);
+			u8 luma = (u8)(x >> 3); // 0..31
+			i8 j = 0, k = 0;
+			switch (band)
+			{
+			case 0: j =  31; k = -16; break; // Warm Red / Gold gradient
+			case 1: j = -16; k =  31; break; // Emerald Green gradient
+			case 2: j = -24; k = -24; break; // Deep Sapphire Blue gradient
+			default:
+				luma = 20;
+				j = (i8)((x >> 2) - 32);
+				k = (i8)(31 - (x >> 2));
+				break;
+			}
+			DrawYJKGroup(rowAddr + x, luma, j, k);
+		}
+		// Replicate the scanline 30 times downward using fast VDP HMMM
+		for (u8 dy = 1; dy < 30; ++dy)
+		{
+			VDP_CommandHMMM(0, baseY, 0, baseY + dy, 256, 1);
 		}
 	}
 	VDP_CommandWait();
 
+	// In YJK mode, byte 0xF8 has Luma=31 and Chroma=0 (pure white); 0x00 is pure black
 	Print_SetBitmapFont(g_Font_MGL_Sample6);
-	Print_SetColor(0xFF, 0x00);
-	Print_SetPosition(16, 6);
+	Print_SetColor(0xF8, 0x00);
+	Print_SetPosition(16, 8);
 	Print_DrawText("MSX2+ SCREEN 12 (19,268 YJK COLORS)");
-	Print_SetPosition(16, 184);
+	Print_SetPosition(16, 180);
 	Print_DrawText("SPLASH/VICTORY/DEATH MODE VERIFIED!");
-	Print_SetPosition(16, 196);
+	Print_SetPosition(16, 194);
 	Print_DrawText("Press any key for SCREEN 8 Layout...");
+	VDP_CommandWait();
 
 	Wiz_PlayTestChord();
-	DOS_CharInput();
+	Wiz_GetKeyNoEcho();
 
 	// --- STEP 2: Test SCREEN 8 (256x212, 256 colors) Game Layout Mockup ---
 	VDP_SetMode(VDP_MODE_SCREEN8);
 	VDP_EnableSprite(FALSE);
+	VDP_SetPage(0);
 	VDP_SetColor(0x00);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x00);
 	VDP_CommandWait();
@@ -506,6 +615,7 @@ void Wiz_RunHardwareVisualTest(void)
 	// Treasures & HUD boxes
 	Draw_Box(136, 80, 253, 142, 0x1C, 0);
 	Draw_Box(0, 144, 255, 211, 0xFF, 0);
+	VDP_CommandWait();
 
 	Print_SetBitmapFont(g_Font_MGL_Sample6);
 	Print_SetColor(0xFF, 0x03);
@@ -539,11 +649,20 @@ void Wiz_RunHardwareVisualTest(void)
 	Print_DrawText("> Audio: PSG + FM (YM2413) + SCC Active");
 	Print_SetPosition(4, 196);
 	Print_DrawText("Press any key to return to MSX-DOS...");
+	VDP_CommandWait();
 
 	Wiz_PlayTestChord();
-	DOS_CharInput();
+	Wiz_GetKeyNoEcho();
 
-	// Restore MSX2+ 80-column text mode cleanly before returning to DOS
+	// --- STEP 3: Restore MSX2+ 80-column text mode & VRAM font cleanly ---
+	VDP_CommandWait();
+	VDP_SetYJK(VDP_YJK_OFF);
+	VDP_SetPage(0);
 	VDP_SetMode(VDP_MODE_SCREEN0_W80);
+	VDP_SetDefaultPalette();
+	VDP_SetColor(0xF0);
+	VDP_FillVRAM_128K(' ', 0x0000, 0, 2048); // Clear Name Table
+	VDP_FillVRAM_128K(0x00, 0x0800, 0, 512); // Clear Blink Table
+	RestoreScreen0Font();                    // Restore 2048-byte Font to 0x1000
 	DOS_ClearScreen();
 }

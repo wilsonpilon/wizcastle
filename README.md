@@ -24,6 +24,26 @@ This **MSX2+ Enhanced Edition** preserves **100% gameplay compatibility** while 
 
 ---
 
+## Screenshots / Galeria Visual
+
+### 1. MSX2+ Hardware Diagnostic Stub & Video/Audio Verification (`v1.2`)
+
+| MSX-DOS 2 Hardware Compatibility Report (`SCREEN 0`, 80×24) |
+| :---: |
+| ![MSX-DOS 2 Hardware Report](docs/images/msx_hwcheck_report.png) |
+
+| `SCREEN 12` Test (19,268 YJK Colors) | `SCREEN 8` Game UI Layout Mockup (256 Colors) |
+| :---: | :---: |
+| ![MSX2+ SCREEN 12 Test](docs/images/msx_hwcheck_sc12.png) | ![MSX2+ SCREEN 8 Layout](docs/images/msx_hwcheck_sc8.png) |
+
+### 2. Original Reference Version Being Ported (*WinWiz* by Daniel D. Miller)
+
+| Intro & Rules Screen | Main Dungeon Map & HUD | Vendor Trading Screen |
+| :---: | :---: | :---: |
+| ![WinWiz Intro](docs/images/winwiz_intro.png) | ![WinWiz Gameplay](docs/images/winwiz_gameplay.png) | ![WinWiz Vendor](docs/images/winwiz_vendor.png) |
+
+---
+
 ## Hardware Requirements / Requisitos de Sistema
 
 | Component | Minimum Required | Recommended Target |

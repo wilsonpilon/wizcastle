@@ -70,3 +70,6 @@ void Wiz_PlayTestChord(void);
 
 // Run interactive SCREEN 12 + SCREEN 8 + Audio visual test
 void Wiz_RunHardwareVisualTest(void);
+
+// Read a single key from MSX-DOS console without echoing to screen
+c8 Wiz_GetKeyNoEcho(void);

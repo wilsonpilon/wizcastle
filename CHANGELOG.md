@@ -10,6 +10,17 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [1.2] - 2026-10-31 — *Fix SCREEN 12 / SCREEN 8 Visual & Audio Test and VRAM Font Restore*
+
+### Fixed
+- **`SCREEN 12` Text & Crash Fix (`src/wiz_hwcheck.c`):** Fixed a critical issue where `VDP_SetMode(VDP_MODE_SCREEN12)` set `g_VDP_Data.Mode = 12` (`VDP_MODE_SCREEN12`), which is not handled by `MSXgl`'s `Print_SetMode()` / `Print_Initialize()` `switch` block (only `VDP_MODE_GRAPHIC7` = `8` was handled), leaving `PRINT_DATA.DrawChar = NULL (0x0000)`. Calling `Print_DrawText()` in `SCREEN 12` previously jumped to `0000h` (MSX-DOS Warm Boot) while still in `SCREEN 12`, causing MSX-DOS to print prompt characters as colored dashes at the top of VRAM and aborting before audio or `SCREEN 8` could run.
+- **Hardware-Timed `WaitFrames()` (`src/wiz_hwcheck.c`):** Replaced `Halt()` with direct polling of V9958 Status Register `S#2` bit 6 (`VR` Vertical Retrace) with safety timeouts, making frame timing 100% immune to `DI`/`EI` interrupt state changes caused by `RDSLT`.
+- **MSX-MUSIC (`YM2413` OPLL) Hardware Timing & Port Enable (`src/wiz_hwcheck.c`):** Added `OPLL_WriteReg()` with mandatory hardware wait cycles after index (`7Ch`) and data (`7Dh`) writes, and enabled `7FF6h` bit 0 for internal as well as external MSX-MUSIC slots.
+- **Clean `SCREEN 0` (Width 80) VRAM Font Backup & Restore (`src/wiz_hwcheck.c`):** Backed up the 2,048-byte MSX-DOS 2 text font from VRAM Page 0 (`0x1000`) into VRAM Page 1 (`0x18000`) prior to the `SCREEN 12`/`SCREEN 8` visual tests and restored it upon returning to `SCREEN 0` (Width 80), preventing VRAM font corruption.
+- **Non-Echoing Console Input (`Wiz_GetKeyNoEcho`):** Switched interactive key prompts to BDOS `07h` (`DOS_FUNC_DIRIN`) so key presses are never echoed into bitmap VRAM.
+
+---
+
 ## [1.1] - 2026-10-31 — *Foundation, Technical Specification & MSX2+ Hardware Diagnostic Stub*
 
 > **Release Subtitle:** *Project Architecture, Complete Documentation Suite & Interactive Hardware Inspector*

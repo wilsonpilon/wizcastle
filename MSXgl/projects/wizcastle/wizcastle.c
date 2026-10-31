@@ -31,7 +31,7 @@ int main(char** argv, int argc)
 	{
 		DOS_Beep();
 		DOS_StringOutput("\r\nPress any key to return to MSX-DOS...$");
-		DOS_CharInput();
+		Wiz_GetKeyNoEcho();
 		return 1;
 	}
 
@@ -42,7 +42,7 @@ int main(char** argv, int argc)
 
 	while (1)
 	{
-		c8 key = DOS_CharInput();
+		c8 key = Wiz_GetKeyNoEcho();
 		if (key == 't' || key == 'T')
 		{
 			Wiz_RunHardwareVisualTest();
