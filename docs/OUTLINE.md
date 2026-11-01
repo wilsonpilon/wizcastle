@@ -31,7 +31,7 @@ Além de ser **100% compatível** com a lógica e regras do jogo original e do p
 
 ## 2. Status de Implementação (O que já foi feito vs. O que falta fazer)
 
-### Fase 1: Documentação, Arquitetura e Diagnóstico de Hardware (STUB)
+### Fase 1: Documentação, Arquitetura e Diagnóstico de Hardware (`v1.1` – `v1.6` — CONCLUÍDA)
 - [x] Análise completa do código-fonte C++ de `winwiz` (`wizard.h`, `CastleInit.cpp`, `initscrn.cpp`, `keyboard.cpp`, `combat.cpp`, `vendor.cpp`, `wfuncs.cpp`, `winwiz.cpp`).
 - [x] Análise da arquitetura e módulos do `MSXgl` (`dos`, `dos_mapper`, `vdp`, `msx-music`, `scc`, `psg`, `lvgm_player`, `ayfx_player`).
 - [x] Criação da pasta `docs/` com:
@@ -39,16 +39,26 @@ Além de ser **100% compatível** com a lógica e regras do jogo original e do p
   - [x] `docs/SPEC.md` (Especificação técnica detalhada)
   - [x] `docs/OUTLINE.md` (Este documento de acompanhamento)
   - [x] `docs/MANUAL.md` (Manual completo de compilação e do jogador)
-- [x] Criação da estrutura do projeto em `MSXgl/projects/wizcastle/` (`project_config.js`, `msxgl_config.h`, `build.bat`, `wizcastle.c`).
-- [x] Implementação e compilação do **STUB de Detecção de Hardware** (`wizcastle.c`), verificando:
-  - [x] Versão do MSX-DOS (DOS 1.x vs DOS 2.x / Nextor) e TPA livre
-  - [x] Geração do MSX (MSX1, MSX2, MSX2+, MSX turbo R) e frequência VBlank (50Hz / 60Hz)
-  - [x] Chip VDP (TMS9918A, V9938, V9958) e quantidade de VRAM (16 KB, 64 KB, 128 KB)
-  - [x] Memory Mapper (Extended BIOS, número de segmentos, RAM Total em KB e RAM Livre em KB)
-  - [x] Chip de som PSG (AY-3-8910 / YM2149) com teste de registrador e bip sonoro
-  - [x] Chip de som FM MSX-MUSIC (YM2413 / OPLL interno ou externo + Slot/Subslot)
-  - [x] Chip de som Konami SCC / SCC+ (+ Slot/Subslot)
-  - [x] Veredito final de compatibilidade (`READY TO PLAY` vs lista de requisitos ausentes)
+- [x] Criação da estrutura do projeto em `MSXgl/projects/wizcastle/` (`project_config.js`, `msxgl_config.h`, `build.bat`, `wizcastle.c`, `src/wiz_hwcheck.c`, `src/wiz_hwcheck.h`, `src/wiz_version.h`).
+- [x] Configuração de licenciamento dual (`LICENSE`), `README.md`, `CHANGELOG.md` e `resume.txt`.
+- [x] Implementação do **Disco de Boot Universal (`DOS2_wizcastle.dsk`)** em 3 camadas:
+  - [x] **MSX-DOS 2 (`MSXDOS2.SYS` + `COMMAND2.COM`):** Boot nativo para MSX2 / MSX2+ / turbo R com MSX-DOS 2 / Nextor.
+  - [x] **MSX-DOS 1 (`MSXDOS.SYS` + `COMMAND.COM`):** Boot automático para máquinas MSX1 / MSX2 / MSX2+ com apenas ROM de MSX-DOS 1 e `>= 64 KB` de RAM.
+  - [x] **MSX Disk-BASIC Fallback (`AUTOEXEC.BAS`):** Relatório de incompatibilidade para MSX1 com `< 64 KB` de RAM (16/32 KB) que caem no Disk-BASIC.
+- [x] Implementação do **Dashboard Gráfico Adaptativo de Diagnóstico de Hardware** (`src/wiz_hwcheck.c`):
+  - [x] **`SCREEN 7` (`512×212`, 16 cores) para MSX2 / MSX2+ / MSX turbo R (`V9938` / `V9958`):** Cartões com badges gráficos `20×12` (`[✓]` Verde, `[✗]` Vermelho, `[!]` Amarelo, `[i]` Ciano).
+  - [x] **`SCREEN 2` (`256×192`, 32×24 tiles) para MSX1 (`TMS9918A`):** Tiles gráficos customizados `8×8` (`[✓]`, `[✗]`, `[!]`, `[i]`) e escrita direta nos registradores `R#0..R#7` (evitando espelhamento de 3 bits `R#8..R#25 -> R#0..R#7` no `TMS9918A`).
+  - [x] Inspeção de 7 subsistemas:
+    1. Versão do MSX-DOS (DOS 1.x vs DOS 2.x / Nextor) e TPA livre (`0006h`)
+    2. Geração do MSX (MSX1, MSX2, MSX2+, MSX turbo R) e frequência VBlank (50Hz / 60Hz)
+    3. Chip VDP (TMS9918A, V9938, V9958) e quantidade de VRAM (16 KB, 64 KB, 128 KB)
+    4. Memory Mapper (Extended BIOS, Slot, número de segmentos, RAM Total e RAM Livre)
+    5. Chip de som PSG (AY-3-8910 / YM2149) via loopback de registrador
+    6. Chip de som FM MSX-MUSIC (YM2413 / OPLL interno ou externo + Slot/Subslot)
+    7. Chip de som Konami SCC / SCC+ (+ Slot/Subslot)
+  - [x] **Teste Interativo Visual e Sonoro (`[T]` / `[S]`):**
+    - [x] Teste de `SCREEN 12` (19.268 cores YJK) + `SCREEN 8` (mockup do layout de 256 cores GRB) + acorde simultâneo em `PSG` + `YM2413 OPLL` + `Konami SCC`.
+    - [x] Preservação e restauração automática da fonte de modo texto (`0xD800` VRAM) ao retornar ao MSX-DOS (`[Q]`/`[ESC]`).
 
 ---
 

@@ -1,0 +1,118 @@
+================================================================================
+ THE WIZARD'S CASTLE - MSX2+ DELUXE EDITION
+ PROJECT HANDOFF & CONTINUATION SUMMARY (resume.txt)
+ Last Updated: 2026-10-31 | Current Version: v1.6 (Phase 1 Complete)
+================================================================================
+
+1. PROJECT OVERVIEW & REPOSITORY
+--------------------------------------------------------------------------------
+- Goal: Build an enhanced MSX2+ / MSX-DOS 2 graphical and musical port of the
+  1980 RPG "The Wizard's Castle" (based on Daniel D. Miller's C++ port in
+  `winwiz/` and Joseph R. Power's 1980 BASIC original), using the `MSXgl`
+  library (`MSXgl/`).
+- Public GitHub Repository: https://github.com/wilsonpilon/wizcastle
+- Git Remote (SSH alias):   git@github-pessoal:wilsonpilon/wizcastle.git
+- Licensing: Dual CC BY-SA 4.0 (combined work with MSXgl) + MIT (standalone C
+  code in `MSXgl/projects/wizcastle/` and docs in `docs/`). See `LICENSE`.
+
+2. VERSIONING SCHEME (X.Y) & RELEASE POLICY
+--------------------------------------------------------------------------------
+- `X` (Major): Increments on each completed feature milestone, new specification,
+  or start of a new implementation phase (e.g., Phase 1 = 1.x, Phase 2 = 2.x).
+- `Y` (Minor): Increments on EVERY compilation/build (`.\build.bat`), no matter
+  how small the change is.
+- Version header: `MSXgl/projects/wizcastle/src/wiz_version.h`
+- History log:    `CHANGELOG.md` (must be updated on every build).
+- Tracked binaries: Both `MSXgl/projects/wizcastle/out/wizcastle.com` and
+  `MSXgl/projects/wizcastle/emul/dsk/DOS2_wizcastle.dsk` are tracked in Git.
+- Releases: Published periodically on GitHub (e.g. `v1.1`, `v1.6`) with a
+  dedicated subtitle consolidating all intermediate changes since the previous
+  release.
+
+3. COMPLETED WORK (PHASE 1: v1.1 -> v1.6 — 100% COMPLETE & VERIFIED)
+--------------------------------------------------------------------------------
+- [v1.1] Complete documentation suite (`docs/PLAN.md`, `docs/SPEC.md`,
+  `docs/OUTLINE.md`, `docs/MANUAL.md`), dual licensing (`LICENSE`), `README.md`,
+  `CHANGELOG.md`, MSXgl project structure (`MSXgl/projects/wizcastle/`), and
+  initial hardware diagnostic stub.
+- [v1.2] Fixed `SCREEN 12` text crash (`g_VDP_Data.Mode = VDP_MODE_GRAPHIC7`
+  after `VDP_SetMode(VDP_MODE_SCREEN12)`), hardware-timed `WaitFrames()` polling
+  V9958 Status Register `S#2` bit 6 (`VR`), YM2413 OPLL register write wait
+  loops (`OPLL_WriteReg`), and non-echoing BDOS `07h` key input.
+- [v1.3] Implemented Adaptive Graphical Hardware Diagnostic Dashboard:
+  - `SCREEN 7` (`512x212`, 16 colors) on MSX2 / MSX2+ / MSX turbo R (`V9938` /
+    `V9958`) with `20x12` graphical status badges (`[✓]` Green, `[✗]` Red,
+    `[!]` Yellow, `[i]` Cyan), alternating slate/black cards, verdict banner,
+    and `[T]` (Video/Sound Test), `[S]` (Sound Only), `[Q/ESC]` (Exit to DOS).
+  - `SCREEN 2` (`256x192`, 32x24 tiles) fallback on MSX1 (`TMS9918A`).
+- [v1.4] Universal 3-Layer Bootable Disk (`DOS2_wizcastle.dsk`):
+  - Includes `MSXDOS2.SYS` + `COMMAND2.COM` (MSX-DOS 2), `MSXDOS.SYS` +
+    `COMMAND.COM` (MSX-DOS 1.11), and `AUTOEXEC.BAS` (MSX Disk-BASIC fallback
+    for MSX1 machines with <64 KB RAM).
+  - Preserves 2,048-byte `SCREEN 0` font (`0x0800` W40 or `0x1000` W80) at VRAM
+    `0xD800` (Page 0) and restores it cleanly on exit to DOS.
+- [v1.5] Fixed MSX1 `TMS9918A` 3-bit register mirroring (`R#8..R#25 -> R#0..R#7`)
+  by adding pure `TMS9918A` helpers (`TMS_RegWrite`, `TMS_FillVRAM`,
+  `TMS_WriteVRAM`) that touch only `R#0..R#7` and update BIOS `RG0SAV..RG7SAV`
+  (`0xF3DF..0xF3E6`).
+- [v1.6] Fixed `SCREEN 2` & `SCREEN 0 (W40)` font glyph offset on MSX1 by
+  starting font copy at `g_Font_MGL_Sample6 + 4 + (32 * 8)` (since `Sprite[0]`
+  is ASCII 0 and `Sprite[32]` is Space `' '`).
+
+4. CRITICAL TECHNICAL FINDINGS & GOTCHAS (READ BEFORE CODING!)
+--------------------------------------------------------------------------------
+1) Rebuilding MSXgl Engine Modules (`CompileSkipOld = true`):
+   Whenever `msxgl_config.h` is modified, you MUST delete cached `.rel` files
+   and `msxgl.lib` before running `.\build.bat`:
+   `Remove-Item MSXgl\projects\wizcastle\out\*.rel, MSXgl\projects\wizcastle\out\msxgl.lib -Force`
+2) `SCREEN 12` + `MSXgl` `Print` Module:
+   `VDP_SetMode(VDP_MODE_SCREEN12)` sets `g_VDP_Data.Mode = 12`, which is not
+   handled by `Print_SetMode()` in `MSXgl/engine/src/print.c` (only
+   `VDP_MODE_GRAPHIC7` = 8 is handled). Always set:
+   `g_VDP_Data.Mode = VDP_MODE_GRAPHIC7;`
+   immediately after `VDP_SetMode(VDP_MODE_SCREEN12)` before calling
+   `Print_SetBitmapFont()`. In `SCREEN 12` YJK mode, `0xF8` is pure white and
+   `0x00` is pure black.
+3) `TMS9918A` (MSX1) Register Mirroring:
+   Because `vdp.c` is compiled with `MSX_VERSION=MSX_2P`, calling `VDP_SetMode`
+   or `VDP_WriteVRAM_16K` writes to `R#8..R#25`. On a `TMS9918A`, register
+   numbers are masked to 3 bits (`reg & 7`), overwriting `R#0..R#7`! Always use
+   `TMS_RegWrite`, `TMS_FillVRAM`, and `TMS_WriteVRAM` on MSX1.
+4) `RDSLT` Interrupt State & VBlank Timing:
+   BIOS `RDSLT` (`000Ch`) disables interrupts (`DI`) and does not re-enable
+   them. Always call `EnableInterrupt()` after slot reads, and use V9958 `S#2`
+   bit 6 (`VR`) polling in `WaitFrames()`.
+5) `g_Font_MGL_Sample6` Offset:
+   Has a 4-byte header (`0x88, 0x68, 0x00, 0xBF`) followed by ASCII `0..191`.
+   ASCII `32` (`' '`) is at `g_Font_MGL_Sample6 + 4 + (32 * 8)` (offset 260).
+
+5. NEXT STEPS — ROADMAP FOR CONTINUATION
+--------------------------------------------------------------------------------
+- PHASE 2 (`v2.x` — Asset Pipeline & Memory Mapper Manager):
+  1. Create `MSXgl/projects/wizcastle/tools/build_assets.js` to convert:
+     - `winwiz/tiles32.png` -> 40 sprites (`32x32` viewport sprites, `16x16`
+       map tiles, `12x12` treasure icons) in `SCREEN 8` (GRB 3-3-2).
+     - `winwiz/images.png` -> `SCREEN 12` (YJK) splash, victory, and death
+       screens compressed with `ZX0`.
+     - Audio `.LVM` tracks and 16 `.AFX` sound effects into `WIZDATA.DAT`.
+  2. Implement `src/wiz_mapper.c` & `src/wiz_mapper.h` to allocate MSX-DOS 2
+     16 KB Mapper segments (`DOSMapper_Alloc`) and stream `WIZDATA.DAT` into
+     Mapper RAM at startup.
+- PHASE 3 (`v3.x` — Video & Audio Engines):
+  1. Implement `src/wiz_video.c` (`SCREEN 12` screens + `SCREEN 8` main UI with
+     VRAM Page 1 tile/font cache, `HMMM` map/viewport blits, and `YMMM` hardware
+     scrolling message log).
+  2. Implement `src/wiz_audio.c` (VBlank `H_TIMI` hook driving `LVGM` music +
+     `ayFX` sound effects across PSG, MSX-MUSIC OPLL, and Konami SCC).
+- PHASE 4 (`v4.x` — Core Game Logic & Hybrid Rules):
+  1. Port `CastleInit.cpp`, `wfuncs.cpp`, and `combat.cpp` into
+     `src/wiz_castle.c`, `src/wiz_gameplay.c`, and `src/wiz_combat.c` supporting
+     both `WinWiz` and `Classic 1980` modes.
+- PHASE 5 (`v5.x` — Dialogs, Bilingual Localization & Final Verification):
+  1. Implement `src/wiz_dialogs.c` and `src/wiz_locale.c` (`EN` & `PT-BR`).
+
+6. HOW TO BUILD ON ANY WINDOWS PC
+--------------------------------------------------------------------------------
+  cd C:\dos\wizcastle\MSXgl\projects\wizcastle
+  .\build.bat
+================================================================================

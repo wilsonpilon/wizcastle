@@ -20,23 +20,32 @@ This **MSX2+ Enhanced Edition** preserves **100% gameplay compatibility** while 
   - **Music (lVGM):** Hybrid background soundtrack utilizing **PSG (AY-3-8910)** + **MSX-MUSIC (YM2413 / OPLL FM)** + **Konami SCC** (when present).
   - **Sound Effects (ayFX):** 16 distinct in-game sound effects (footsteps, stairs, sinkholes, warps, sword hits, fireballs, vendor chimes, victory/death fanfares) mixed on PSG Channel C.
 - **Bilingual Support:** Full in-game localization in **English (`EN`)** and **Portuguese (`PT-BR`)**.
-- **Built-in Hardware Diagnostic Tool:** Startup hardware inspector verifying MSX generation (MSX1/MSX2/MSX2+/Turbo R), VDP (TMS9918/V9938/V9958), MSX-DOS version, Extended BIOS Mapper RAM (testing for 1024 KB total / ≥128 KB free), PSG, MSX-MUSIC (FM), and Konami SCC.
+- **Adaptive Graphical Hardware Diagnostic Dashboard & Universal Boot Disk (`v1.6`):**
+  - **Universal Boot Disk (`DOS2_wizcastle.dsk`):** Bundled with `MSXDOS2.SYS` + `COMMAND2.COM` (MSX-DOS 2), `MSXDOS.SYS` + `COMMAND.COM` (MSX-DOS 1.11), and `AUTOEXEC.BAS` (MSX Disk-BASIC fallback) so **any** MSX machine (MSX1, MSX2, MSX2+, or turbo R) boots directly into the diagnostic report instead of dropping to a blank BASIC prompt.
+  - **`SCREEN 7` (`512×212`, 16 colors) on MSX2 / MSX2+ / turbo R:** High-resolution graphical inspector with `20×12` pixel badges (`[✓]` Green, `[✗]` Red, `[!]` Yellow, `[i]` Cyan).
+  - **`SCREEN 2` (`256×192`, 32×24 tiles) on MSX1 (`TMS9918A`):** Custom 8×8 graphical badge tiles (`[✓]`, `[✗]`, `[!]`, `[i]`) and color-coded status rows using pure `R#0..R#7` register writes (preventing 3-bit `TMS9918A` register mirroring).
 
 ---
 
 ## Screenshots / Galeria Visual
 
-### 1. MSX2+ Hardware Diagnostic Stub & Video/Audio Verification (`v1.2`)
+### 1. Adaptive Graphical Hardware Diagnostic Dashboard (`v1.6`)
 
-| MSX-DOS 2 Hardware Compatibility Report (`SCREEN 0`, 80×24) |
+| **MSX2+ / turbo R — `SCREEN 7` (`512×212`, 100% Compatible)** |
 | :---: |
-| ![MSX-DOS 2 Hardware Report](docs/images/msx_hwcheck_report.png) |
+| ![MSX2+ SCREEN 7 Hardware Report](docs/images/msx_hwcheck_report.png) |
 
-| `SCREEN 12` Test (19,268 YJK Colors) | `SCREEN 8` Game UI Layout Mockup (256 Colors) |
+| **MSX2 (`V9938` / `MSX-DOS 1`) — `SCREEN 7` (`512×212`)** | **MSX1 (`TMS9918A` / `MSX-DOS 1`) — `SCREEN 2` (`256×192`)** |
+| :---: | :---: |
+| ![MSX2 SCREEN 7 Hardware Report](docs/images/msx2_hwcheck_screen7.png) | ![MSX1 SCREEN 2 Hardware Report](docs/images/msx1_hwcheck_screen2.png) |
+
+### 2. Interactive Visual & Audio Hardware Verification (`[T]` / `[S]` Keys)
+
+| `SCREEN 12` Test (19,268 YJK Colors + PSG/FM/SCC Audio) | `SCREEN 8` Game UI Layout Mockup (256 GRB Colors) |
 | :---: | :---: |
 | ![MSX2+ SCREEN 12 Test](docs/images/msx_hwcheck_sc12.png) | ![MSX2+ SCREEN 8 Layout](docs/images/msx_hwcheck_sc8.png) |
 
-### 2. Original Reference Version Being Ported (*WinWiz* by Daniel D. Miller)
+### 3. Original Reference Version Being Ported (*WinWiz* by Daniel D. Miller)
 
 | Intro & Rules Screen | Main Dungeon Map & HUD | Vendor Trading Screen |
 | :---: | :---: | :---: |
@@ -74,6 +83,8 @@ wizcastle/
 │           ├── wizcastle.c         # Main entry point (DOS2 main)
 │           └── src/                # Game modules (hardware check, mapper, video, audio, logic)
 ├── winwiz/                         # Reference C++ Port by Daniel D. Miller (CC0 1.0)
+├── CHANGELOG.md                    # Complete X.Y Version & Build History
+├── resume.txt                      # Multi-PC Development Handoff & Progress Summary
 ├── LICENSE                         # Licensing & Third-Party Attributions
 └── README.md                       # This file
 ```

@@ -6,16 +6,16 @@
 ## 1. Visão Geral do Sistema
 **The Wizard's Castle — MSX2+ Deluxe Edition** é uma recriação gráfica e sonora para computadores **MSX2+** (e compatíveis superiores como MSX turbo R) rodando **MSX-DOS 2**, mantendo 100% de fidelidade às regras tanto do port em C++ (**WinWiz**, de Daniel D. Miller, 1985–2025) quanto do jogo original em BASIC (**The Wizard's Castle**, de Joseph R. Power, *Recreational Computing*, Jul/Ago 1980).
 
-### 1.1 Requisitos de Hardware e Sistema
-| Componente | Requisito Mínimo (Obrigatório) | Recomendado (Ideal) | Comportamento do Diagnóstico (Stub) |
+### 1.1 Requisitos de Hardware, Disco de Boot Universal e Diagnóstico Gráfico (`v1.6`)
+| Componente | Requisito Mínimo (Obrigatório) | Recomendado (Ideal) | Comportamento do Diagnóstico Gráfico (`SCREEN 7` / `SCREEN 2`) |
 | :--- | :--- | :--- | :--- |
-| **Geração MSX** | **MSX2+** (`ID >= 2` em `002Dh`) | **MSX2+** ou **MSX turbo R** | Em MSX1 ou MSX2 alerta falta de SCREEN 12 / V9958 (`[FAIL]` em MSX1, `[WARN]`/`[FAIL]` em MSX2). |
-| **VDP (Vídeo)** | **Yamaha V9958** com **128 KB VRAM** | **Yamaha V9958** (128 KB VRAM) | Verifica `VDP_GetVersion() == VDP_VERSION_V9958` e `g_MODE` (`128 KB VRAM`). |
-| **Sistema Operacional** | **MSX-DOS 2.20+** ou **Nextor** | **MSX-DOS 2.20+** / **Nextor 2.1+** | Em MSX-DOS 1.x reporta ausência de File Handles e Extended BIOS Mapper (`[FAIL]`). |
-| **RAM (Memory Mapper)** | **256 KB** (mín. 8 segmentos livres) | **1024 KB (1 MB)** (64 segmentos) | Verifica `DOSMapper_Init()`, lista total de RAM (KB) e RAM livre (KB). |
+| **Geração MSX** | **MSX2+** (`ID >= 2` em `002Dh`) | **MSX2+** ou **MSX turbo R** | Em MSX2/2+/TR renderiza dashboard em **`SCREEN 7` (`512×212`)**; em MSX1 renderiza dashboard em **`SCREEN 2` (`256×192`)** com badges `[✓]`/`[✗]`/`[!]`/`[i]`. |
+| **VDP (Vídeo)** | **Yamaha V9958** com **128 KB VRAM** | **Yamaha V9958** (128 KB VRAM) | Verifica `VDP_GetVersion() == VDP_VERSION_V9958` e `g_MODE` (`128 KB VRAM`). Em MSX1 (`TMS9918A`) usa escrita direta `R#0..R#7` para evitar espelhamento de 3 bits. |
+| **Sistema Operacional** | **MSX-DOS 2.20+** ou **Nextor** | **MSX-DOS 2.20+** / **Nextor 2.1+** | O disco `DOS2_wizcastle.dsk` inclui `MSXDOS2.SYS` + `COMMAND2.COM` (DOS2), `MSXDOS.SYS` + `COMMAND.COM` (DOS1) e `AUTOEXEC.BAS` (Disk-BASIC `<64KB` fallback). |
+| **RAM (Memory Mapper)** | **256 KB** (mín. 8 segmentos livres) | **1024 KB (1 MB)** (64 segmentos) | Verifica `DOSMapper_Init()`, lista Slot, total de RAM (KB) e RAM livre (KB). |
 | **Áudio Base** | **PSG** (AY-3-8910 / YM2149) | **PSG** (3 canais + gerador de ruído) | Testa leitura/escrita nos registradores do PSG (`A0h–A2h`). |
-| **Áudio FM** | Opcional (Recomendado) | **MSX-MUSIC (YM2413 / OPLL)** | Detecta chip interno ou cartucho externo (FM-PAC) e exibe o Slot/Subslot (`[ OK ]` ou `[WARN]`). |
-| **Áudio Wavetable** | Opcional (Suportado) | **Konami SCC / SCC+** (K051649) | Varre slots em busca de cartucho SCC/SCC+ e exibe o Slot/Subslot (`[ OK ]` ou `[INFO]`). |
+| **Áudio FM** | Opcional (Recomendado) | **MSX-MUSIC (YM2413 / OPLL)** | Detecta chip interno ou cartucho externo (FM-PAC, habilitando bit 0 de `7FF6h`) e exibe o Slot/Subslot (`[✓]` ou `[!]`). |
+| **Áudio Wavetable** | Opcional (Suportado) | **Konami SCC / SCC+** (K051649) | Varre slots em busca de cartucho SCC/SCC+ e exibe o Slot/Subslot (`[✓]` ou `[i]`). |
 
 ---
 

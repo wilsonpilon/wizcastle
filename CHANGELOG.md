@@ -10,12 +10,18 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
-## [1.6] - 2026-10-31 — *Fix SCREEN 2 Font ASCII Offset on MSX1*
+## [1.6] - 2026-10-31 — *Adaptive Graphical Hardware Diagnostic Dashboard (SCREEN 7 / SCREEN 2) & Universal Boot Disk*
 
-### Fixed
+> **Release Subtitle:** *Adaptive SCREEN 7 (MSX2/2+) & SCREEN 2 (MSX1) Graphical Hardware Inspector, Universal 3-Layer Boot Disk & Verified SCREEN 12/8 + FM/SCC Test Suite*
+> **Consolidated Release (`v1.1` → `v1.6`):** Completes Phase 1 with a full graphical hardware diagnostic dashboard across all MSX generations (`SCREEN 7` 512×212 on MSX2/2+/turbo R and `SCREEN 2` 256×192 on MSX1), a universal boot disk (`MSX-DOS 2` + `MSX-DOS 1` + `MSX Disk-BASIC`), hardware-timed `SCREEN 12`/`SCREEN 8` + `PSG`/`OPLL`/`SCC` verification, and complete updated documentation + multi-PC handoff (`resume.txt`).
+
+### Fixed & Added in `v1.6`
 - **`SCREEN 2` & `SCREEN 0 (W40)` Font Table Offset (`src/wiz_hwcheck.c`):**
   - Fixed character glyph offset when loading `g_Font_MGL_Sample6` into `SCREEN 2` (and `SCREEN 0` on MSX 1). Because `g_Font_MGL_Sample6` starts at character `0x00` (offset `4`) rather than `0x20` (`32`), copying from `g_Font_MGL_Sample6 + 4` into tile `32` shifted all displayed characters by `-32` ASCII positions.
   - Updated all `TMS_WriteVRAM` font loads to start at `g_Font_MGL_Sample6 + 4 + (32 * 8)` (offset `260`, `Sprite[32]`), aligning ASCII `32..127` (White), `32..95` (Green at tiles `128..191`), and `32..95` (Red at tiles `192..255`).
+- **Complete Documentation & Multi-PC Handoff (`README.md`, `resume.txt`, `docs/`):**
+  - Added `resume.txt` with full architectural handoff, technical gotchas, and Phase 2–5 roadmap for seamless continuation on any PC.
+  - Added screenshots of the graphical diagnostic on **MSX2+ (`SCREEN 7`)**, **MSX2 (`SCREEN 7`)**, and **MSX1 (`SCREEN 2`)** to `README.md`, and updated `docs/OUTLINE.md`, `docs/MANUAL.md`, and `docs/SPEC.md`.
 
 ---
 
