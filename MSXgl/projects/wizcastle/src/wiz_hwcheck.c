@@ -266,8 +266,8 @@ void Wiz_RestoreTextMode(void)
 
 		TMS_FillVRAM(' ', 0x0000, 960);
 		TMS_FillVRAM(0x00, 0x0800, 2048);
-		// Reload ASCII font into 0x0800 for SCREEN 0 W40
-		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, 0x0800 + (32 * 8), 96 * 8);
+		// Reload ASCII font (starting at ASCII 32 = offset 4 + 32*8) into 0x0800 for SCREEN 0 W40
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4 + (32 * 8), 0x0800 + (32 * 8), 96 * 8);
 
 		TMS_RegWrite(1, 0xF0); // 16K=1, BL=1 (Display ON), IE0=1, M1=1 (Text 1)
 		DOS_ClearScreen();
@@ -669,15 +669,16 @@ static void RenderDiagnosticScreen2(void)
 		TMS_WriteVRAM(g_Sc2IconPatterns, pgBase + (1 * 8), 5 * 8);
 		TMS_WriteVRAM(g_Sc2IconColors,   ctBase + (1 * 8), 5 * 8);
 
-		// 2. Load standard ASCII 32..127 (White text on Black 0xF1; Gold on Dark Blue 0xB4 for Header rows in Bank 0)
-		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (32 * 8), 96 * 8);
+		// 2. Load standard ASCII 32..127 (White text on Black 0xF1)
+		//    Note: g_Font_MGL_Sample6 starts at ASCII 0 (offset 4), so ASCII 32 starts at offset 4 + (32 * 8)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4 + (32 * 8), pgBase + (32 * 8), 96 * 8);
 
-		// 3. Copy uppercase/digits 32..95 to tiles 128..191 (Bright Green text 0x31)
-		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (128 * 8), 64 * 8);
+		// 3. Copy uppercase/digits ASCII 32..95 to tiles 128..191 (Bright Green text 0x31)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4 + (32 * 8), pgBase + (128 * 8), 64 * 8);
 		TMS_FillVRAM(0x31, ctBase + (128 * 8), 64 * 8);
 
-		// 4. Copy uppercase/digits 32..95 to tiles 192..255 (Light Red text 0x91)
-		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (192 * 8), 64 * 8);
+		// 4. Copy uppercase/digits ASCII 32..95 to tiles 192..255 (Light Red text 0x91)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4 + (32 * 8), pgBase + (192 * 8), 64 * 8);
 		TMS_FillVRAM(0x91, ctBase + (192 * 8), 64 * 8);
 	}
 

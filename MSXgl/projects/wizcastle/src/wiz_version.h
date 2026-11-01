@@ -11,6 +11,6 @@
 #pragma once
 
 #define WIZ_VERSION_MAJOR  1
-#define WIZ_VERSION_MINOR  5
-#define WIZ_VERSION_STR    "1.5"
-#define WIZ_VERSION_TITLE  "Fix MSX1 TMS9918A Register Mirroring & SCREEN 2 Dashboard"
+#define WIZ_VERSION_MINOR  6
+#define WIZ_VERSION_STR    "1.6"
+#define WIZ_VERSION_TITLE  "Fix SCREEN 2 Font ASCII Offset (+256 bytes for ASCII 32)"

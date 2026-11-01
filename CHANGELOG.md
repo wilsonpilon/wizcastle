@@ -10,6 +10,15 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [1.6] - 2026-10-31 — *Fix SCREEN 2 Font ASCII Offset on MSX1*
+
+### Fixed
+- **`SCREEN 2` & `SCREEN 0 (W40)` Font Table Offset (`src/wiz_hwcheck.c`):**
+  - Fixed character glyph offset when loading `g_Font_MGL_Sample6` into `SCREEN 2` (and `SCREEN 0` on MSX 1). Because `g_Font_MGL_Sample6` starts at character `0x00` (offset `4`) rather than `0x20` (`32`), copying from `g_Font_MGL_Sample6 + 4` into tile `32` shifted all displayed characters by `-32` ASCII positions.
+  - Updated all `TMS_WriteVRAM` font loads to start at `g_Font_MGL_Sample6 + 4 + (32 * 8)` (offset `260`, `Sprite[32]`), aligning ASCII `32..127` (White), `32..95` (Green at tiles `128..191`), and `32..95` (Red at tiles `192..255`).
+
+---
+
 ## [1.5] - 2026-10-31 — *Fix MSX1 TMS9918A Register Mirroring & SCREEN 2 Graphical Badges*
 
 ### Fixed
