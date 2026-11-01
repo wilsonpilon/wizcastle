@@ -10,6 +10,24 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [2.1] - 2026-10-31 — *Phase 2: MSX-DOS 2 Memory Mapper Manager & `WIZDATA.DAT` Asset Pipeline*
+
+### Added
+- **Asset Conversion Pipeline (`tools/build_assets.ps1` -> `emul/WIZDATA.DAT`):**
+  - Automated extraction and conversion of `winwiz/tiles32.png` and `winwiz/images.png` into a 7-segment (`114,688 bytes` = `112 KB`) MSX2+ asset pack (`WIZDATA.DAT`), bundled automatically onto `DOS2_wizcastle.dsk`:
+    - **Segments 0–2 (`48 KB`):** All 40 `32×32` game object sprites (`UNSEEN_ROOM` through `ELF`) in `SCREEN 8` (256-color GRB `3-3-2`), plus `"WIZDATA1"` integrity signature at `0x3F00` in Segment 2.
+    - **Segment 3 (`16 KB`):** All 40 `16×16` Dungeon Map tiles (`10 KB` at `0x0000`) and 10 `16×16` Treasure Icons (`RUBY_RED`..`ORB_OF_ZOT`, `2.5 KB` at `0x2800`) in `SCREEN 8` GRB `3-3-2`.
+    - **Segments 4–6 (`48 KB`):** All 3 `160×100` splash/event paintings (`TILE_COMBAT`, `TILE_VICTORY`, `TILE_DEATH` from `winwiz/images.png`) encoded in `SCREEN 12` YJK (19,268 colors, 4-pixel YJK packets).
+- **MSX-DOS 2 Memory Mapper Manager (`src/wiz_mapper.h`, `src/wiz_mapper.c`):**
+  - Allocates 7 user segments (`112 KB`) in the primary Memory Mapper (`DOSMapper_Alloc`) and streams `WIZDATA.DAT` via a safe 2 KB TPA Page 1 buffer (`g_DiskBuf`) with custom `IX`-preserving BDOS 2 file handle routines (`Wiz_DOS2_Open`, `Wiz_DOS2_ReadChunk`, `Wiz_DOS2_Close`) while rendering a graphical progress bar in `SCREEN 7`.
+  - Verifies the `"WIZDATA1"` signature in Segment 2 (`0xBF00`) and frees all allocated segments cleanly (`Wiz_MapperCleanup`) on exit to MSX-DOS 2.
+  - Provides instant Page 2 (`0x8000–0xBFFF`) bank-switching and VDP transfer routines: `Wiz_MapperDrawYJKPanel()`, `Wiz_MapperUploadTilesToVRAMPage1()`, `Wiz_MapperBlitTile16()`, `Wiz_MapperBlitTreasureIcon16()`, and `Wiz_MapperDrawSprite32()`.
+- **Interactive Mapper & Asset Showcase in `[T]` Visual Test (`src/wiz_hwcheck.c`):**
+  - In **`SCREEN 12`**, streams the real `160×100` YJK paintings directly from Mapper Segments 4–6 and allows pressing `[1]` (Combat), `[2]` (Victory), or `[3]` (Death) for zero-disk-latency bank switching.
+  - In **`SCREEN 8`**, uploads all 40 `16×16` dungeon tiles and 10 treasure icons from Mapper Segment 3 into VRAM Page 1 (`0x10000+`), hardware-blits (`HMMM`) a full `8×8` dungeon floor map and treasure tray, and renders `32×32` sprites (`[1]` Dragon, `[2]` Balrog, `[3]` Chest, `[4]` Elf) from Mapper Segments 0–2 inside the `48×48` Room Viewport.
+
+---
+
 ## [1.6] - 2026-10-31 — *Adaptive Graphical Hardware Diagnostic Dashboard (SCREEN 7 / SCREEN 2) & Universal Boot Disk*
 
 > **Release Subtitle:** *Adaptive SCREEN 7 (MSX2/2+) & SCREEN 2 (MSX1) Graphical Hardware Inspector, Universal 3-Layer Boot Disk & Verified SCREEN 12/8 + FM/SCC Test Suite*

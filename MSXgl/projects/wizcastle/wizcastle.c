@@ -10,6 +10,7 @@
 #include "msxgl.h"
 #include "dos.h"
 #include "src/wiz_hwcheck.h"
+#include "src/wiz_mapper.h"
 
 //=============================================================================
 // MAIN ENTRY POINT
@@ -60,7 +61,8 @@ int main(char** argv, int argc)
 		}
 	}
 
-	// 6. Cleanly restore MSX-DOS 80-column text mode & font before exiting
+	// 6. Free any allocated Memory Mapper segments and restore MSX-DOS text mode
+	Wiz_MapperCleanup();
 	Wiz_RestoreTextMode();
 	DOS_StringOutput("The Wizard's Castle MSX2+ (v" WIZ_VERSION_STR ") - Returning to MSX-DOS 2...\r\n$");
 	return 0;

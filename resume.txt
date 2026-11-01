@@ -1,7 +1,7 @@
 ================================================================================
  THE WIZARD'S CASTLE - MSX2+ DELUXE EDITION
  PROJECT HANDOFF & CONTINUATION SUMMARY (resume.txt)
- Last Updated: 2026-10-31 | Current Version: v1.6 (Phase 1 Complete)
+ Last Updated: 2026-10-31 | Current Version: v2.1 (Phase 2 Mapper & Assets Done)
 ================================================================================
 
 1. PROJECT OVERVIEW & REPOSITORY
@@ -88,16 +88,16 @@
 
 5. NEXT STEPS — ROADMAP FOR CONTINUATION
 --------------------------------------------------------------------------------
-- PHASE 2 (`v2.x` — Asset Pipeline & Memory Mapper Manager):
-  1. Create `MSXgl/projects/wizcastle/tools/build_assets.js` to convert:
-     - `winwiz/tiles32.png` -> 40 sprites (`32x32` viewport sprites, `16x16`
-       map tiles, `12x12` treasure icons) in `SCREEN 8` (GRB 3-3-2).
-     - `winwiz/images.png` -> `SCREEN 12` (YJK) splash, victory, and death
-       screens compressed with `ZX0`.
-     - Audio `.LVM` tracks and 16 `.AFX` sound effects into `WIZDATA.DAT`.
-  2. Implement `src/wiz_mapper.c` & `src/wiz_mapper.h` to allocate MSX-DOS 2
-     16 KB Mapper segments (`DOSMapper_Alloc`) and stream `WIZDATA.DAT` into
-     Mapper RAM at startup.
+- PHASE 2 (`v2.1` — Asset Pipeline & Memory Mapper Manager — COMPLETED!):
+  - Created `MSXgl/projects/wizcastle/tools/build_assets.ps1` generating
+    `emul/WIZDATA.DAT` (114,688 bytes = 7 x 16 KB segments):
+    - Segs 0..2: 40 `32x32` sprites (`SCREEN 8` GRB 3-3-2) + `"WIZDATA1"` tag.
+    - Seg 3:     40 `16x16` map tiles + 10 `16x16` treasure icons (`SCREEN 8`).
+    - Segs 4..6: 3 `160x100` YJK illustrations (`COMBAT`, `VICTORY`, `DEATH`).
+  - Implemented `src/wiz_mapper.h` and `src/wiz_mapper.c` with safe 2 KB TPA
+    buffered BDOS 2 reads (`push ix`/`pop ix`), `SCREEN 7` graphical loading
+    bar, Page 2 (`0x8000-0xBFFF`) bank switching, VRAM Page 1 tile caching, and
+    clean segment deallocation (`Wiz_MapperCleanup`) on exit to DOS.
 - PHASE 3 (`v3.x` — Video & Audio Engines):
   1. Implement `src/wiz_video.c` (`SCREEN 12` screens + `SCREEN 8` main UI with
      VRAM Page 1 tile/font cache, `HMMM` map/viewport blits, and `YMMM` hardware

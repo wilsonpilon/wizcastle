@@ -28,7 +28,8 @@ ProjName = "wizcastle";
 //-- List of project modules to build (array). If empty, ProjName will be added
 ProjModules = [
 	"wizcastle",
-	"src/wiz_hwcheck"
+	"src/wiz_hwcheck",
+	"src/wiz_mapper"
 ];
 
 //-- List of library modules to build (array)
@@ -73,7 +74,8 @@ DiskSize = "720K";
 DiskFiles = [
 	`${MSXDOS}MSXDOS.SYS`,
 	`${MSXDOS}COMMAND.COM`,
-	`${ProjDir}emul/AUTOEXEC.BAS`
+	`${ProjDir}emul/AUTOEXEC.BAS`,
+	`${ProjDir}emul/WIZDATA.DAT`
 ];
 
 //*******************************************************************************

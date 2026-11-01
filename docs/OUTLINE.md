@@ -62,11 +62,12 @@ Além de ser **100% compatível** com a lógica e regras do jogo original e do p
 
 ---
 
-### Fase 2: Pipeline de Assets e Gerenciador de Memory Mapper (`WIZDATA.DAT`)
-- [ ] Criar script `tools/build_assets.js` para extrair os 40 sprites de `winwiz/tiles32.png` (`32×32`, `16×16` e `12×12` em SCREEN 8 GRB 3-3-2).
-- [ ] Converter as 3 telas de `winwiz/images.png` + arte de abertura para **SCREEN 12 (YJK)** comprimidas com **ZX0**.
-- [ ] Gerar pacote de trilhas `.LVM` (PSG + FM OPLL) e banco de 16 efeitos sonoros `.AFX` (ayFX).
-- [ ] Implementar `src/wiz_mapper.c` para alocar segmentos no MSX-DOS 2 e carregar `WIZDATA.DAT` na inicialização com barra de progresso.
+### Fase 2: Pipeline de Assets e Gerenciador de Memory Mapper (`WIZDATA.DAT` — `v2.1`)
+- [x] Criar script `tools/build_assets.ps1` para extrair os 40 sprites de `winwiz/tiles32.png` (`32×32` para a Viewport, `16×16` para o Mapa 8×8 e 10 ícones `16×16` de tesouros em `SCREEN 8` GRB 3-3-2).
+- [x] Converter as 3 telas de `winwiz/images.png` (`TILE_COMBAT`, `TILE_VICTORY`, `TILE_DEATH`) para **SCREEN 12 (YJK 19.268 cores)** empacotadas em `emul/WIZDATA.DAT` (`114.688 bytes` = `112 KB`, 7 segmentos de 16 KB).
+- [x] Implementar `src/wiz_mapper.h` e `src/wiz_mapper.c` para alocar 7 segmentos no MSX-DOS 2 (`DOSMapper_Alloc`), carregar `WIZDATA.DAT` na inicialização com barra gráfica de progresso em `SCREEN 7`, verificar assinatura `"WIZDATA1"`, paginar `Page 2` (`0x8000–0xBFFF`) sob demanda e liberar os segmentos ao sair para o DOS (`Wiz_MapperCleanup`).
+- [x] Integrar os assets reais da Memory Mapper (`SCREEN 12` YJK `[1/2/3]` + `SCREEN 8` Mapa `8×8`, Bandeja de Tesouros e Sprites `32×32` `[1/2/3/4]`) no teste interativo `[T]`.
+- [ ] Adicionar pacote de trilhas `.LVM` (PSG + FM OPLL) e banco de 16 efeitos sonoros `.AFX` (ayFX) (junto com `src/wiz_audio.c` na Fase 3).
 
 ---
 

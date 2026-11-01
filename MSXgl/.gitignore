@@ -44,10 +44,13 @@ dos2
 !/projects/wizcastle/out/wizcastle.com
 !/projects/wizcastle/emul
 !/projects/wizcastle/emul/AUTOEXEC.BAS
+!/projects/wizcastle/emul/WIZDATA.DAT
 !/projects/wizcastle/emul/dos2
 !/projects/wizcastle/emul/dos2/*
 !/projects/wizcastle/emul/dsk
 !/projects/wizcastle/emul/dsk/*
+!/projects/wizcastle/tools
+!/projects/wizcastle/tools/*
 !/projects/wizard.bat
 !/projects/wizard.sh
 

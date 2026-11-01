@@ -16,6 +16,7 @@
 #include "msx-music.h"
 #include "scc.h"
 #include "wiz_hwcheck.h"
+#include "wiz_mapper.h"
 #include "font/font_mgl_sample6.h"
 
 //=============================================================================
@@ -522,8 +523,16 @@ static void RenderDiagnosticScreen7(void)
 	if (g_HwInfo.hasDosMapper && g_HwInfo.totalSegments >= REC_TOTAL_SEGS && g_HwInfo.freeSegments >= MIN_FREE_SEGS)
 	{
 		ramBadge = BADGE_OK;
-		String_Format(g_LineBuf, "%d KB Total / %d KB Free (Slot %s, %d segs)",
-			g_HwInfo.totalRamKB, g_HwInfo.freeRamKB, FormatSlotId(g_HwInfo.mapperSlot), g_HwInfo.totalSegments);
+		if (Wiz_MapperIsReady())
+		{
+			String_Format(g_LineBuf, "%d KB Total / 112 KB WIZDATA Loaded (Slot %s, 7 segs)",
+				g_HwInfo.totalRamKB, FormatSlotId(g_HwInfo.mapperSlot));
+		}
+		else
+		{
+			String_Format(g_LineBuf, "%d KB Total / %d KB Free (Slot %s, %d segs)",
+				g_HwInfo.totalRamKB, g_HwInfo.freeRamKB, FormatSlotId(g_HwInfo.mapperSlot), g_HwInfo.totalSegments);
+		}
 	}
 	else if (g_HwInfo.hasDosMapper && g_HwInfo.totalSegments >= MIN_TOTAL_SEGS && g_HwInfo.freeSegments >= MIN_FREE_SEGS)
 	{
@@ -973,11 +982,30 @@ static void DrawYJKGroup(u16 vramAddr, u8 luma, i8 j, i8 k)
 	VDP_WriteVRAM_128K(pkt, vramAddr, 0, 4);
 }
 
+// Sample 8x8 Dungeon Map demonstrating all real 16x16 tiles from Mapper Segment 3
+static const u8 g_DemoDungeonMap[8][8] =
+{
+	{ OBJ_CASTLE_ENTRANCE, OBJ_EMPTY_ROOM,  OBJ_GOLD_PIECES, OBJ_KOBOLD,      OBJ_EMPTY_ROOM,  OBJ_CHEST,       OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM },
+	{ OBJ_EMPTY_ROOM,      OBJ_POOL,        OBJ_EMPTY_ROOM,  OBJ_ORC,         OBJ_FLARES,      OBJ_EMPTY_ROOM,  OBJ_STAIRS_DOWN, OBJ_UNSEEN_ROOM },
+	{ OBJ_GOBLIN,          OBJ_EMPTY_ROOM,  OBJ_CRYSTAL_ORB, OBJ_EMPTY_ROOM,  OBJ_BOOK,        OBJ_MINOTAUR,    OBJ_EMPTY_ROOM,  OBJ_UNSEEN_ROOM },
+	{ OBJ_ELF,             OBJ_DRAGON,      OBJ_RUBY_RED,    OBJ_VENDOR,      OBJ_EMPTY_ROOM,  OBJ_WARP,        OBJ_GARGOYLE,    OBJ_UNSEEN_ROOM },
+	{ OBJ_EMPTY_ROOM,      OBJ_EMPTY_ROOM,  OBJ_SINKHOLE,    OBJ_EMPTY_ROOM,  OBJ_CHIMERA,     OBJ_EMPTY_ROOM,  OBJ_BLUE_FLAME,  OBJ_UNSEEN_ROOM },
+	{ OBJ_STAIRS_UP,       OBJ_TROLL,       OBJ_EMPTY_ROOM,  OBJ_BALROG,      OBJ_ORB_OF_ZOT,  OBJ_RUNESTAFF,   OBJ_EMPTY_ROOM,  OBJ_UNSEEN_ROOM },
+	{ OBJ_UNSEEN_ROOM,     OBJ_UNSEEN_ROOM, OBJ_EMPTY_ROOM,  OBJ_PALANTIR,    OBJ_EMPTY_ROOM,  OBJ_SILMARIL,    OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM },
+	{ OBJ_UNSEEN_ROOM,     OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM, OBJ_UNSEEN_ROOM }
+};
+
 //-----------------------------------------------------------------------------
-// Run interactive SCREEN 12 + SCREEN 8 + Audio visual test
+// Run interactive SCREEN 12 + SCREEN 8 + Audio + Memory Mapper visual test
 void Wiz_RunHardwareVisualTest(void)
 {
 	Wiz_BackupTextFont();
+
+	// --- STEP 0: Allocate 7 Mapper Segments (112 KB) & Stream WIZDATA.DAT ---
+	if (!Wiz_MapperIsReady())
+	{
+		Wiz_MapperInitAndLoad();
+	}
 
 	// --- STEP 1: Test MSX2+ SCREEN 12 (256x212, 19,268 YJK colors) ---
 	VDP_SetMode(VDP_MODE_SCREEN12);
@@ -989,9 +1017,10 @@ void Wiz_RunHardwareVisualTest(void)
 	VDP_CommandHMMV(0, 0, 256, 212, 0x00);
 	VDP_CommandWait();
 
+	// Draw 4 smooth YJK gradient strips along the bottom (Y = 128..167)
 	for (u8 band = 0; band < 4; ++band)
 	{
-		u16 baseY = 28 + (u16)band * 36;
+		u16 baseY = 128 + (u16)band * 10;
 		u16 rowAddr = baseY * 256;
 		for (u16 x = 0; x < 256; x += 4)
 		{
@@ -1010,27 +1039,56 @@ void Wiz_RunHardwareVisualTest(void)
 			}
 			DrawYJKGroup(rowAddr + x, luma, j, k);
 		}
-		for (u8 dy = 1; dy < 30; ++dy)
+		for (u8 dy = 1; dy < 8; ++dy)
 		{
 			VDP_CommandHMMM(0, baseY, 0, baseY + dy, 256, 1);
 		}
 	}
 	VDP_CommandWait();
 
+	// Stream real 160x100 YJK Artwork from Mapper Segment 4 (COMBAT/TITLE)
+	if (Wiz_MapperIsReady())
+	{
+		Draw_Box(46, 18, 209, 121, 0xF8, 0);
+		Wiz_MapperDrawYJKPanel(WIZ_SEG_YJK_COMBAT, 48, 20);
+	}
+
 	Print_SetBitmapFont(g_Font_MGL_Sample6);
 	Print_SetColor(0xF8, 0x00);
-	Print_SetPosition(16, 8);
-	Print_DrawText("MSX2+ SCREEN 12 (19,268 YJK COLORS)");
-	Print_SetPosition(16, 180);
-	Print_DrawText("SPLASH/VICTORY/DEATH MODE VERIFIED!");
-	Print_SetPosition(16, 194);
-	Print_DrawText("Press any key for SCREEN 8 Layout...");
+	Print_SetPosition(8, 4);
+	Print_DrawText("MSX2+ SCREEN 12: YJK ARTWORK (MAPPER)");
+	Print_SetPosition(8, 174);
+	Print_DrawText("[1] Combat  [2] Victory  [3] Death");
+	Print_SetPosition(8, 186);
+	Print_DrawText("Mapper Segs 4-6 (19,268 YJK Colors)");
+	Print_SetPosition(8, 198);
+	Print_DrawText("Any other key -> SCREEN 8 Dungeon UI");
 	VDP_CommandWait();
 
 	Wiz_PlayTestChord();
-	Wiz_GetKeyNoEcho();
 
-	// --- STEP 2: Test SCREEN 8 (256x212, 256 colors) Game Layout Mockup ---
+	while (1)
+	{
+		c8 k = Wiz_GetKeyNoEcho();
+		if (k == '1' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawYJKPanel(WIZ_SEG_YJK_COMBAT, 48, 20);
+		}
+		else if (k == '2' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawYJKPanel(WIZ_SEG_YJK_VICTORY, 48, 20);
+		}
+		else if (k == '3' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawYJKPanel(WIZ_SEG_YJK_DEATH, 48, 20);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	// --- STEP 2: Test SCREEN 8 (256x212, 256 colors) Real Tiles & Sprites ---
 	VDP_SetMode(VDP_MODE_SCREEN8);
 	VDP_EnableSprite(FALSE);
 	VDP_SetPage(0);
@@ -1038,23 +1096,53 @@ void Wiz_RunHardwareVisualTest(void)
 	VDP_CommandHMMV(0, 0, 256, 212, 0x00);
 	VDP_CommandWait();
 
+	// Upload 40 16x16 Map Tiles + 10 Treasure Icons from Mapper Seg 3 into VRAM Page 1
+	if (Wiz_MapperIsReady())
+	{
+		Wiz_MapperUploadTilesToVRAMPage1();
+	}
+
+	// Top status bar
 	VDP_CommandHMMV(0, 0, 256, 10, 0x03);
+
+	// 8x8 Dungeon Map Box (X=3..132, Y=13..142)
 	Draw_Box(3, 13, 132, 142, 0xFF, 0);
 	for (u8 r = 0; r < 8; ++r)
 	{
 		for (u8 c = 0; c < 8; ++c)
 		{
-			u8 tileCol = ((r + c) & 1) ? 0x49 : 0x24;
-			if (c == 0 && r == 3)
-				tileCol = 0xFC;
-			VDP_CommandHMMV(4 + c * 16, 14 + r * 16, 15, 15, tileCol);
+			u8 dx = 4 + (c << 4);
+			u8 dy = 14 + (r << 4);
+			if (Wiz_MapperIsReady())
+			{
+				Wiz_MapperBlitTile16(g_DemoDungeonMap[r][c], dx, dy);
+			}
+			else
+			{
+				u8 tileCol = ((r + c) & 1) ? 0x49 : 0x24;
+				VDP_CommandHMMV(dx, dy, 15, 15, tileCol);
+			}
 		}
 	}
+	VDP_CommandWait();
 
+	// Highlight Player cursor at (0, 3) where OBJ_ELF stands
+	Draw_Box(4, 14 + 3 * 16, 19, 29 + 3 * 16, 0xFC, 0);
+
+	// 48x48 Room Viewport Box (X=136..184, Y=13..61) with stone brick border
 	Draw_Box(136, 13, 184, 61, 0xE0, 0);
-	VDP_CommandHMMV(137, 14, 46, 46, 0x25);
+	VDP_CommandHMMV(137, 14, 47, 47, 0x49);
+	VDP_CommandHMMV(142, 19, 36, 36, 0x00);
+	VDP_CommandWait();
 
-	Draw_Box(136, 80, 253, 142, 0x1C, 0);
+	// Draw 32x32 Dragon Sprite from Mapper Segment 1 into the Room Viewport
+	if (Wiz_MapperIsReady())
+	{
+		Wiz_MapperDrawSprite32(OBJ_DRAGON, 144, 21);
+	}
+
+	// Treasure Tray & Message Log boxes
+	Draw_Box(136, 78, 253, 142, 0x1C, 0);
 	Draw_Box(0, 144, 255, 211, 0xFF, 0);
 	VDP_CommandWait();
 
@@ -1075,23 +1163,57 @@ void Wiz_RunHardwareVisualTest(void)
 	Print_SetPosition(188, 54);
 	Print_DrawText("FL:5  GP:999");
 
-	Print_SetPosition(140, 84);
+	Print_SetPosition(140, 81);
 	Print_DrawText("TREASURES (8+RS+OZ)");
 	for (u8 t = 0; t < 10; ++t)
 	{
-		VDP_CommandHMMV(140 + (t % 5) * 22, 96 + (t / 5) * 20, 14, 14, (u8)(0x1F + t * 23));
+		u8 tx = 141 + (t % 5) * 22;
+		u8 ty = 92 + (t / 5) * 24;
+		if (Wiz_MapperIsReady())
+		{
+			Wiz_MapperBlitTreasureIcon16(t, tx, ty);
+		}
+		else
+		{
+			VDP_CommandHMMV(tx, ty, 16, 16, (u8)(0x1F + t * 23));
+		}
 	}
+	VDP_CommandWait();
 
 	Print_SetPosition(4, 148);
-	Print_DrawText("> SCREEN 8 (256 Colors) UI Layout Ready!");
-	Print_SetPosition(4, 158);
-	Print_DrawText("> 8x8 Map + 48x48 Room Viewport + HUD");
+	Print_DrawText("> Mapper: 7x16KB (112KB) WIZDATA Active!");
+	Print_SetPosition(4, 159);
+	Print_DrawText("> 40 Map Tiles (VRAM P1) + 40 32x32 Sprites");
 	Print_SetPosition(4, 170);
-	Print_DrawText("> Audio: PSG + FM (YM2413) + SCC Active");
+	Print_DrawText("> [1]Dragon [2]Balrog [3]Chest [4]Elf");
 	Print_SetPosition(4, 196);
-	Print_DrawText("Press any key to return to Inspector...");
+	Print_DrawText("Any other key -> Return to Inspector...");
 	VDP_CommandWait();
 
 	Wiz_PlayTestChord();
-	Wiz_GetKeyNoEcho();
+
+	while (1)
+	{
+		c8 k = Wiz_GetKeyNoEcho();
+		if (k == '1' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawSprite32(OBJ_DRAGON, 144, 21);
+		}
+		else if (k == '2' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawSprite32(OBJ_BALROG, 144, 21);
+		}
+		else if (k == '3' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawSprite32(OBJ_CHEST, 144, 21);
+		}
+		else if (k == '4' && Wiz_MapperIsReady())
+		{
+			Wiz_MapperDrawSprite32(OBJ_ELF, 144, 21);
+		}
+		else
+		{
+			break;
+		}
+	}
 }
