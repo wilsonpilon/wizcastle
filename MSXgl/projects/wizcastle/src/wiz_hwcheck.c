@@ -60,51 +60,65 @@ static const i8 g_SccTestWave[32] = {
 
 // Custom 8x8 icon patterns for SCREEN 2 (MSX1 fallback)
 static const u8 g_Sc2IconPatterns[5 * 8] = {
-	// Tile 1: Green Checkmark [✓]
+	// Tile 1: Filled Green Badge with White Checkmark [✓]
 	0b01111110,
-	0b10000001,
-	0b10000011,
-	0b10000110,
-	0b10101100,
-	0b10011000,
-	0b10000001,
-	0b01111110,
-	// Tile 2: Red Cross [✗]
-	0b01111110,
-	0b10000001,
-	0b10100101,
-	0b10011001,
-	0b10011001,
-	0b10100101,
-	0b10000001,
-	0b01111110,
-	// Tile 3: Yellow Warning [!]
-	0b01111110,
-	0b10011001,
-	0b10011001,
-	0b10011001,
-	0b10011001,
-	0b10000001,
-	0b10011001,
-	0b01111110,
-	// Tile 4: Cyan Info [i]
-	0b01111110,
-	0b10011001,
-	0b10000001,
-	0b10011001,
-	0b10011001,
-	0b10011001,
-	0b10000001,
-	0b01111110,
-	// Tile 5: Horizontal Bar
+	0b00000010,
+	0b00000110,
+	0b01001100,
+	0b01111000,
+	0b00110000,
 	0b00000000,
+	0b01111110,
+	// Tile 2: Filled Red Badge with White Cross [✗]
+	0b01111110,
+	0b01000010,
+	0b00100100,
+	0b00011000,
+	0b00011000,
+	0b00100100,
+	0b01000010,
+	0b01111110,
+	// Tile 3: Filled Yellow Badge with Black Exclamation [!]
+	0b01111110,
+	0b00011000,
+	0b00011000,
+	0b00011000,
+	0b00000000,
+	0b00011000,
+	0b00000000,
+	0b01111110,
+	// Tile 4: Filled Blue Badge with White Info [i]
+	0b01111110,
+	0b00011000,
+	0b00000000,
+	0b00011000,
+	0b00011000,
+	0b00011000,
+	0b00000000,
+	0b01111110,
+	// Tile 5: Royal Blue & Gold Horizontal Divider Bar
+	0b11111111,
 	0b11111111,
 	0b00000000,
 	0b00000000,
 	0b00000000,
-	0b11111111,
 	0b00000000,
+	0b11111111,
 	0b00000000
+};
+
+// Per-row 8-byte color definitions for the 5 custom SCREEN 2 tiles
+static const u8 g_Sc2IconColors[5 * 8] = {
+	// Tile 1: Green Badge [✓] (White 15 on Medium Green 2, Light/Dark Green borders)
+	0x31, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xF2, 0xC1,
+	// Tile 2: Red Badge [✗] (White 15 on Medium Red 8, Light/Dark Red borders)
+	0x91, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0x61,
+	// Tile 3: Yellow Badge [!] (Black 1 on Light Yellow 11, Dark Yellow borders)
+	0xB1, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0x1B, 0xA1,
+	// Tile 4: Blue Badge [i] (White 15 on Dark Blue 4, Cyan/Blue borders)
+	0x71, 0xF4, 0xF4, 0xF4, 0xF4, 0xF4, 0xF4, 0x41,
+	// Tile 5: Divider Bar (Gold 11 & Light Blue 5 on Dark Blue 4)
+	0x41, 0xB4, 0xF4, 0xF4, 0xF4, 0xF4, 0x54, 0xF1
 };
 
 //=============================================================================
@@ -180,10 +194,48 @@ static void OPLL_WriteReg(u8 reg, u8 value)
 }
 
 //-----------------------------------------------------------------------------
+// Pure TMS9918A (MSX1) VDP register & 16KB VRAM helpers.
+// IMPORTANT: Because MSXgl's vdp.c is compiled with MSX_VERSION=MSX_2P, calling
+// VDP_SetMode() or VDP_WriteVRAM_16K() writes to MSX2 registers R#8..R#25.
+// On a real TMS9918A (MSX1), register numbers are masked to 3 bits (reg & 7),
+// so writing R#8..R#15 overwrites R#0..R#7 and drops out of SCREEN 2 back to
+// SCREEN 0 text mode! These helpers touch ONLY R#0..R#7 and ports 98h/99h.
+static void TMS_RegWrite(u8 reg, u8 val)
+{
+	reg &= 0x07;
+	POKE(0xF3DF + reg, val); // Update BIOS RG0SAV..RG7SAV shadow
+	VDP_RegWrite(reg, val);
+}
+
+static void TMS_FillVRAM(u8 val, u16 dest, u16 count)
+{
+	DisableInterrupt();
+	g_VDP_AddrPort = (u8)(dest & 0xFF);
+	g_VDP_AddrPort = (u8)(((dest >> 8) & 0x3F) | 0x40);
+	while (count--)
+	{
+		g_VDP_DataPort = val;
+	}
+	EnableInterrupt();
+}
+
+static void TMS_WriteVRAM(const u8* src, u16 dest, u16 count)
+{
+	DisableInterrupt();
+	g_VDP_AddrPort = (u8)(dest & 0xFF);
+	g_VDP_AddrPort = (u8)(((dest >> 8) & 0x3F) | 0x40);
+	while (count--)
+	{
+		g_VDP_DataPort = *src++;
+	}
+	EnableInterrupt();
+}
+
+//-----------------------------------------------------------------------------
 // Backup 2048-byte SCREEN 0 Font from VRAM Page 0 (0x0800 W40 or 0x1000 W80) to 0xD800
 void Wiz_BackupTextFont(void)
 {
-	if (g_FontBackedUp || g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A)
+	if (g_FontBackedUp || g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A || g_HwInfo.msxVersion == MSXVER_1)
 		return;
 
 	u16 srcAddr = (PEEK(0xF3AE) > 40) ? 0x1000 : 0x0800;
@@ -200,14 +252,24 @@ void Wiz_BackupTextFont(void)
 // Restore MSX-DOS text mode and VRAM font cleanly before exiting to DOS
 void Wiz_RestoreTextMode(void)
 {
-	if (g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A)
+	if (g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A || g_HwInfo.msxVersion == MSXVER_1)
 	{
-		VDP_SetMode(VDP_MODE_SCREEN0_W40);
-		VDP_SetColor(0xF1);
-		VDP_FillVRAM_16K(' ', 0x0000, 960);
-		VDP_FillVRAM_16K(0x00, 0x0800, 2048);
+		// Pure TMS9918A SCREEN 0 (40x24 Text 1) restore without touching R#8..R#25
+		TMS_RegWrite(0, 0x00); // M3=0
+		TMS_RegWrite(1, 0xB0); // 16K=1, BL=0 (blank during restore), IE0=1, M1=1 (Text 1)
+		TMS_RegWrite(2, 0x00); // Name Table = 0x0000
+		TMS_RegWrite(3, 0x80); // Color Table = 0x2000 (unused in Text 1)
+		TMS_RegWrite(4, 0x01); // Pattern Table = 0x0800
+		TMS_RegWrite(5, 0x36); // Sprite Attribute Table = 0x1B00
+		TMS_RegWrite(6, 0x07); // Sprite Pattern Table = 0x3800
+		TMS_RegWrite(7, 0xF4); // White (15) text on Dark Blue (4) background
+
+		TMS_FillVRAM(' ', 0x0000, 960);
+		TMS_FillVRAM(0x00, 0x0800, 2048);
 		// Reload ASCII font into 0x0800 for SCREEN 0 W40
-		VDP_WriteVRAM_16K(g_Font_MGL_Sample6 + 4, 0x0800 + (32 * 8), 96 * 8);
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, 0x0800 + (32 * 8), 96 * 8);
+
+		TMS_RegWrite(1, 0xF0); // 16K=1, BL=1 (Display ON), IE0=1, M1=1 (Text 1)
 		DOS_ClearScreen();
 		return;
 	}
@@ -556,7 +618,7 @@ static void Sc2PrintAt(u8 x, u8 y, const c8* str, u8 tileOffset)
 		u8 ch = (u8)*str++;
 		if (ch >= 32 && ch < 96)
 			ch = (u8)(ch + tileOffset);
-		VDP_FillVRAM_16K(ch, addr++, 1);
+		TMS_FillVRAM(ch, addr++, 1);
 		x++;
 	}
 }
@@ -570,20 +632,28 @@ static void Sc2PutIcon(u8 x, u8 y, u8 badgeType)
 	else if (badgeType == BADGE_FAIL) tile = SC2_TILE_CROSS;
 	else if (badgeType == BADGE_WARN) tile = SC2_TILE_WARN;
 
-	VDP_FillVRAM_16K(tile, 0x1800 + ((u16)y * 32) + x, 1);
+	TMS_FillVRAM(tile, 0x1800 + ((u16)y * 32) + x, 1);
 }
 
 //-----------------------------------------------------------------------------
 // Render SCREEN 2 (256x192) Graphical Diagnostic for MSX1 (TMS9918A)
 static void RenderDiagnosticScreen2(void)
 {
-	VDP_SetMode(VDP_MODE_SCREEN2);
-	VDP_SetColor(0xF1); // White on Black
+	// Configure TMS9918A R#0..R#7 directly (never touch R#8..R#25!)
+	// Blank display (BL=0 in R#1 = 0xA2) while populating 16KB VRAM tables
+	TMS_RegWrite(0, 0x02); // R#0: M3=1 (Graphic 2 / SCREEN 2)
+	TMS_RegWrite(1, 0xA2); // R#1: 16K=1, BL=0 (blank), IE0=1, M1=0, M2=0, SI=1
+	TMS_RegWrite(2, 0x06); // R#2: Name Table at 0x1800 (6 * 0x400)
+	TMS_RegWrite(3, 0xFF); // R#3: Color Table at 0x2000 (all 3 banks)
+	TMS_RegWrite(4, 0x03); // R#4: Pattern Generator Table at 0x0000 (all 3 banks)
+	TMS_RegWrite(5, 0x36); // R#5: Sprite Attribute Table at 0x1B00
+	TMS_RegWrite(6, 0x07); // R#6: Sprite Pattern Table at 0x3800
+	TMS_RegWrite(7, 0xF1); // R#7: White (15) foreground / Black (1) border
 
 	// Clear Name Table (0x1800, 768 bytes) to space (32)
-	VDP_FillVRAM_16K(' ', 0x1800, 768);
+	TMS_FillVRAM(' ', 0x1800, 768);
 	// Disable Sprites (0xD0 at Sprite Attribute Table 0x1B00)
-	VDP_FillVRAM_16K(0xD0, 0x1B00, 1);
+	TMS_FillVRAM(0xD0, 0x1B00, 1);
 
 	// Initialize all 3 SCREEN 2 banks (0x0000, 0x0800, 0x1000)
 	for (u8 bank = 0; bank < 3; ++bank)
@@ -592,34 +662,30 @@ static void RenderDiagnosticScreen2(void)
 		u16 ctBase = 0x2000 + ((u16)bank * 0x0800);
 
 		// Clear pattern and color bank
-		VDP_FillVRAM_16K(0x00, pgBase, 0x0800);
-		VDP_FillVRAM_16K(0xF1, ctBase, 0x0800);
+		TMS_FillVRAM(0x00, pgBase, 0x0800);
+		TMS_FillVRAM(0xF1, ctBase, 0x0800);
 
-		// 1. Load custom 8x8 graphical icons into tiles 1..5
-		VDP_WriteVRAM_16K(g_Sc2IconPatterns, pgBase + (1 * 8), 5 * 8);
-		VDP_FillVRAM_16K(0x31, ctBase + (SC2_TILE_CHECK * 8), 8); // Green [✓]
-		VDP_FillVRAM_16K(0x91, ctBase + (SC2_TILE_CROSS * 8), 8); // Red   [✗]
-		VDP_FillVRAM_16K(0xB1, ctBase + (SC2_TILE_WARN  * 8), 8); // Yellow [!]
-		VDP_FillVRAM_16K(0x71, ctBase + (SC2_TILE_INFO  * 8), 8); // Cyan  [i]
-		VDP_FillVRAM_16K(0x51, ctBase + (SC2_TILE_HBAR  * 8), 8); // Light Blue bar
+		// 1. Load custom 8x8 graphical badges into tiles 1..5 with per-row badge colors
+		TMS_WriteVRAM(g_Sc2IconPatterns, pgBase + (1 * 8), 5 * 8);
+		TMS_WriteVRAM(g_Sc2IconColors,   ctBase + (1 * 8), 5 * 8);
 
-		// 2. Load standard ASCII 32..127 (White text 0xF1)
-		VDP_WriteVRAM_16K(g_Font_MGL_Sample6 + 4, pgBase + (32 * 8), 96 * 8);
+		// 2. Load standard ASCII 32..127 (White text on Black 0xF1; Gold on Dark Blue 0xB4 for Header rows in Bank 0)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (32 * 8), 96 * 8);
 
-		// 3. Copy uppercase/digits 32..95 to tiles 128..191 (Green text 0x31)
-		VDP_WriteVRAM_16K(g_Font_MGL_Sample6 + 4, pgBase + (128 * 8), 64 * 8);
-		VDP_FillVRAM_16K(0x31, ctBase + (128 * 8), 64 * 8);
+		// 3. Copy uppercase/digits 32..95 to tiles 128..191 (Bright Green text 0x31)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (128 * 8), 64 * 8);
+		TMS_FillVRAM(0x31, ctBase + (128 * 8), 64 * 8);
 
-		// 4. Copy uppercase/digits 32..95 to tiles 192..255 (Red text 0x91)
-		VDP_WriteVRAM_16K(g_Font_MGL_Sample6 + 4, pgBase + (192 * 8), 64 * 8);
-		VDP_FillVRAM_16K(0x91, ctBase + (192 * 8), 64 * 8);
+		// 4. Copy uppercase/digits 32..95 to tiles 192..255 (Light Red text 0x91)
+		TMS_WriteVRAM(g_Font_MGL_Sample6 + 4, pgBase + (192 * 8), 64 * 8);
+		TMS_FillVRAM(0x91, ctBase + (192 * 8), 64 * 8);
 	}
 
 	// Draw Header & Horizontal Bars
-	VDP_FillVRAM_16K(SC2_TILE_HBAR, 0x1800 + (0 * 32), 32);
+	TMS_FillVRAM(SC2_TILE_HBAR, 0x1800 + (0 * 32), 32);
 	Sc2PrintAt(1, 1, "WIZARD'S CASTLE MSX2+ (v" WIZ_VERSION_STR ")", 0);
 	Sc2PrintAt(2, 2, "HARDWARE DIAGNOSTIC CHECK", 0);
-	VDP_FillVRAM_16K(SC2_TILE_HBAR, 0x1800 + (3 * 32), 32);
+	TMS_FillVRAM(SC2_TILE_HBAR, 0x1800 + (3 * 32), 32);
 
 	// Row 1: OS
 	u8 b0 = (g_HwInfo.dosVer >= DOS_VER_2) ? BADGE_OK : BADGE_FAIL;
@@ -637,7 +703,7 @@ static void RenderDiagnosticScreen2(void)
 	u8 b2 = (g_HwInfo.vdpVersion >= VDP_VERSION_V9958 && g_HwInfo.vramSizeKB >= 128) ? BADGE_OK : BADGE_FAIL;
 	Sc2PutIcon(1, 9, b2);
 	Sc2PrintAt(3, 9, "3.VDP:", 0);
-	Sc2PrintAt(10, 9, (b2 == BADGE_OK) ? "V9958 128KB OK" : "NEED V9958 128K", (b2 == BADGE_OK) ? 96 : 160);
+	Sc2PrintAt(10, 9, (b2 == BADGE_OK) ? "V9958 128KB OK" : "TMS9918A (16KB)", (b2 == BADGE_OK) ? 96 : 160);
 
 	// Row 4: Mapper RAM
 	u8 b3 = (g_HwInfo.hasDosMapper && g_HwInfo.totalSegments >= MIN_TOTAL_SEGS) ? BADGE_OK : BADGE_FAIL;
@@ -663,7 +729,7 @@ static void RenderDiagnosticScreen2(void)
 	Sc2PrintAt(3, 17, "7.SCC:", 0);
 	Sc2PrintAt(10, 17, g_HwInfo.hasSCC ? "KONAMI SCC OK" : "NO SCC (OPT)", g_HwInfo.hasSCC ? 96 : 0);
 
-	VDP_FillVRAM_16K(SC2_TILE_HBAR, 0x1800 + (19 * 32), 32);
+	TMS_FillVRAM(SC2_TILE_HBAR, 0x1800 + (19 * 32), 32);
 
 	if (g_HwInfo.isCompatible)
 	{
@@ -677,6 +743,10 @@ static void RenderDiagnosticScreen2(void)
 		Sc2PrintAt(3, 20, "INCOMPATIBLE SYSTEM!", 160);
 		Sc2PrintAt(2, 22, "Press any key to exit DOS", 0);
 	}
+	TMS_FillVRAM(SC2_TILE_HBAR, 0x1800 + (23 * 32), 32);
+
+	// Enable SCREEN 2 display now that all VRAM tables are populated
+	TMS_RegWrite(1, 0xE2); // R#1: 16K=1, BL=1 (Display ON), IE0=1, M1=0, M2=0, SI=1
 }
 
 //=============================================================================
@@ -709,20 +779,29 @@ void Wiz_DetectHardware(void)
 		g_HwInfo.failCount++;
 
 	// 3. Detect VDP Version & VRAM Size
-	g_HwInfo.vdpVersion = VDP_GetVersion();
-	if (g_HwInfo.msxVersion == MSXVER_1 || g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A)
+	//    Avoid calling VDP_GetVersion() on MSX1 because it writes to R#15 (which mirrors to R#7 on TMS9918A)
+	if (g_HwInfo.msxVersion == MSXVER_1)
 	{
+		g_HwInfo.vdpVersion = VDP_VERSION_TMS9918A;
 		g_HwInfo.vramSizeKB = 16;
 	}
 	else
 	{
-		u8 vramBits = (g_MODE >> 1) & 0x03;
-		switch (vramBits)
+		g_HwInfo.vdpVersion = VDP_GetVersion();
+		if (g_HwInfo.vdpVersion == VDP_VERSION_TMS9918A)
 		{
-		case 0:  g_HwInfo.vramSizeKB = 16;  break;
-		case 1:  g_HwInfo.vramSizeKB = 64;  break;
-		case 2:  g_HwInfo.vramSizeKB = 128; break;
-		default: g_HwInfo.vramSizeKB = 192; break;
+			g_HwInfo.vramSizeKB = 16;
+		}
+		else
+		{
+			u8 vramBits = (g_MODE >> 1) & 0x03;
+			switch (vramBits)
+			{
+			case 0:  g_HwInfo.vramSizeKB = 16;  break;
+			case 1:  g_HwInfo.vramSizeKB = 64;  break;
+			case 2:  g_HwInfo.vramSizeKB = 128; break;
+			default: g_HwInfo.vramSizeKB = 192; break;
+			}
 		}
 	}
 

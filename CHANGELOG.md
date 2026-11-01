@@ -10,6 +10,20 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [1.5] - 2026-10-31 — *Fix MSX1 TMS9918A Register Mirroring & SCREEN 2 Graphical Badges*
+
+### Fixed
+- **MSX 1 (`TMS9918A`) Register Mirroring Fix (`src/wiz_hwcheck.c`):**
+  - Because `MSXgl`'s `vdp.c` is compiled with `MSX_VERSION=MSX_2P`, calling `VDP_SetMode(VDP_MODE_SCREEN2)` or `VDP_WriteVRAM_16K()` wrote to MSX2/MSX2+ registers `R#8`, `R#9`, `R#10`, `R#11`, `R#13`, `R#14`, and `R#25`.
+  - On a real **Texas Instruments `TMS9918A` (MSX 1)**, register indices are masked to 3 bits (`reg & 7`), causing writes to `R#8..R#15` and `R#25` to mirror onto `R#0..R#7`:
+    - `R#8` mirrored to `R#0` (`0x00`), clearing the `M3` (`SCREEN 2`) mode bit.
+    - `R#9` and `R#25` mirrored to `R#1`, switching the VDP back into `SCREEN 0` (Text 1 mode).
+    - `R#10` mirrored to `R#2` (`0x00`), moving the Name Table to `0x0000` so the pattern generator data was displayed as scrambled text.
+  - Added dedicated pure-`TMS9918A` helpers (`TMS_RegWrite`, `TMS_FillVRAM`, `TMS_WriteVRAM`) that touch **only** `R#0..R#7` (updating `M_RG0SAV..M_RG7SAV` at `0xF3DF..0xF3E6`), blank the display (`BL=0`) during bulk 16 KB VRAM initialization, and re-enable the display (`BL=1`) once `SCREEN 2` tables are populated.
+  - Enhanced the `SCREEN 2` (`256×192`) graphical icons (`g_Sc2IconPatterns` + `g_Sc2IconColors`) to render filled color badges (`[✓]` White on Green, `[✗]` White on Red, `[!]` Black on Yellow, `[i]` White on Blue) and Royal-Blue/Gold horizontal divider bars.
+
+---
+
 ## [1.4] - 2026-10-31 — *Universal Boot Disk (MSX-DOS 2 + MSX-DOS 1 + MSX Disk-BASIC Fallback)*
 
 ### Added

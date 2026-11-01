@@ -11,6 +11,6 @@
 #pragma once
 
 #define WIZ_VERSION_MAJOR  1
-#define WIZ_VERSION_MINOR  4
-#define WIZ_VERSION_STR    "1.4"
-#define WIZ_VERSION_TITLE  "Universal Boot DSK (DOS2 + DOS1 + BASIC) & SC2/SC7 Dashboard"
+#define WIZ_VERSION_MINOR  5
+#define WIZ_VERSION_STR    "1.5"
+#define WIZ_VERSION_TITLE  "Fix MSX1 TMS9918A Register Mirroring & SCREEN 2 Dashboard"
