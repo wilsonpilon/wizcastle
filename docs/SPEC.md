@@ -28,17 +28,20 @@ Sob o **MSX-DOS 2**, as 4 páginas de 16 KB do Z80 estão configuradas na RAM do
 * **`8000h–BFFFh` (Page 2 — 16 KB):** **Janela de Paginação Dinâmica do Memory Mapper** (`DOSMapper_SetPage2(seg)`). Nunca armazena código residente; é chaveada sob demanda para ler sprites, descomprimir telas SCREEN 12, acessar strings EN/PT e tocar streams musicais `.LVM`.
 * **`C000h–F37Fh` (Page 3 — ~13 KB):** Variáveis globais (`player`, `castle[8][8][8]`, buffers de estado), pilha do Z80 e área residente do MSX-DOS 2 + Jump Table da Extended BIOS.
 
-### 2.2 Organização dos Segmentos do Memory Mapper (`WIZDATA.DAT`)
-Cada segmento alocado via `DOSMapper_Alloc(DOS_ALLOC_USER, DOS_SEGSLOT_PRIM, &seg)` possui **16.384 bytes (16 KB)**:
+### 2.2 Organização dos Segmentos do Memory Mapper (`WIZDATA.DAT` — `v2.1`)
+O arquivo `emul/WIZDATA.DAT` (**114.688 bytes = 112 KB**, gerado por `tools/build_assets.ps1` a partir de `winwiz/tiles32.png` e `winwiz/images.png`) é carregado em **7 segmentos de 16.384 bytes (16 KB)** alocados via `DOSMapper_Alloc(DOS_ALLOC_USER, DOS_SEGSLOT_PRIM | DOS_SEGSLOT_THISFIRST, &g_WizSegs[i])`:
 
-| Índice Lógico | Conteúdo do Segmento (16 KB) | Descrição Técnica |
+| Índice Lógico (`g_WizSegs`) | Conteúdo do Segmento (16 KB) | Descrição Técnica (`0x8000–0xBFFF` quando paginado) |
 | :---: | :--- | :--- |
-| **`SEG_SCR12_A`** | Tela de Abertura (SCREEN 12 ZX0) + Tela de Vitória (SCREEN 12 ZX0) | Imagens `256×212` codificadas em YJK (8 bpp), comprimidas com ZX0 (~7 KB cada). |
-| **`SEG_SCR12_B`** | Tela de Derrota (SCREEN 12 ZX0) + Cenários de Viewport (SCREEN 8) | Arte de Game Over em SCREEN 12 ZX0 + fundos `48×48` da sala (masmorra, escadas, loja, piscina). |
-| **`SEG_TILES_32`** | 40 Sprites `32×32` em SCREEN 8 (GRB 3-3-2) | `40 × 1024 bytes = 40 KB` (distribuídos em `SEG_TILES_32_A`, `SEG_TILES_32_B` e metade de `SEG_TILES_16`). |
-| **`SEG_TILES_16`** | 40 Tiles `16×16` + 10 Ícones `12×12` + Fonte `6×8` | `40 × 256 bytes = 10 KB` (copiados para VRAM Page 1 na inicialização para blit via `HMMM`). |
-| **`SEG_LOCALE`** | Tabelas de Textos Bilíngues (`EN` e `PT-BR`) + Help Text | Strings indexadas por ID para mensagens do terminal, nomes de objetos, maldições e ajuda. |
-| **`SEG_AUDIO_0..2`** | Trilhas Musicais `.LVM` (PSG + OPLL + SCC) + Banco `.AFX` | Streams lVGM para Abertura, Exploração, Combate, Loja, Vitória e Derrota + 16 efeitos ayFX. |
+| **`0: WIZ_SEG_SPR32_0`** | Sprites `32×32` IDs `0..15` (`SCREEN 8` GRB 3-3-2) | `16 × 1.024 bytes = 16.384 B` (`UNSEEN_ROOM` até `KRESH`). |
+| **`1: WIZ_SEG_SPR32_1`** | Sprites `32×32` IDs `16..31` (`SCREEN 8` GRB 3-3-2) | `16 × 1.024 bytes = 16.384 B` (`GOBLIN` até `BLUE_FLAME`). |
+| **`2: WIZ_SEG_SPR32_2`** | Sprites `32×32` IDs `32..39` + Tag `"WIZDATA1"` | `8 × 1.024 bytes = 8.192 B` (`PALANTIR` até `ELF`) + assinatura `"WIZDATA1"` em `0x3F00`. |
+| **`3: WIZ_SEG_MAP_TILES`** | 40 Tiles `16×16` do Mapa + 10 Ícones `16×16` de Tesouro | `40 × 256 B = 10 KB` em `0x0000` + `10 × 256 B = 2,5 KB` em `0x2800` (copiados para VRAM Page 1 para blit via `HMMM`). |
+| **`4: WIZ_SEG_YJK_COMBAT`** | Arte `160×100` de Abertura/Combate (`SCREEN 12` YJK) | `160 × 100 = 16.000 bytes` codificados em pacotes YJK de 4 pixels (19.268 cores). |
+| **`5: WIZ_SEG_YJK_VICTORY`** | Arte `160×100` de Vitória (`SCREEN 12` YJK) | `160 × 100 = 16.000 bytes` codificados em pacotes YJK de 4 pixels (`TILE_VICTORY`). |
+| **`6: WIZ_SEG_YJK_DEATH`** | Arte `160×100` de Game Over (`SCREEN 12` YJK) | `160 × 100 = 16.000 bytes` codificados em pacotes YJK de 4 pixels (`TILE_DEATH`). |
+
+> **Regra de Segurança MSX-DOS 2 BDOS + Page 2 (`src/wiz_mapper.c`):** Durante a leitura de `WIZDATA.DAT` via BDOS `48h` (`_READ`), o segmento original da TPA (`g_OrigSegPage2`) é mantido ativo em `0x8000–0xBFFF` e os dados são lidos em blocos de 2.048 bytes para `g_DiskBuf[2048]` na Page 1 (abaixo de `0x8000`), preservando o registrador `IX` (`push ix`/`pop ix`) antes de copiar cada bloco para o segmento alvo e liberando todos os segmentos (`Wiz_MapperCleanup`) ao sair para o MSX-DOS 2.
 
 ### 2.3 Mapa da VRAM no V9958 (128 KB)
 Durante a execução principal em **SCREEN 8** (`256×212`, 256 cores, 256 bytes por linha):

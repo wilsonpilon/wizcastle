@@ -85,6 +85,16 @@
 5) `g_Font_MGL_Sample6` Offset:
    Has a 4-byte header (`0x88, 0x68, 0x00, 0xBF`) followed by ASCII `0..191`.
    ASCII `32` (`' '`) is at `g_Font_MGL_Sample6 + 4 + (32 * 8)` (offset 260).
+6) MSX-DOS 2 `BDOS` (`0005h`) + Memory Mapper Page 2 (`0x8000–0xBFFF`):
+   Never pass a buffer at `0x8000–0xBFFF` directly to `BDOS 48h` (`_READ`)
+   while a custom Mapper segment is paged into Page 2, because MSX-DOS 2
+   switches segments internally during disk I/O and writes into the default TPA
+   Page 2 segment! Always read into a buffer in Page 1 TPA (`g_DiskBuf[2048]`
+   in `.bss`, below `0x8000`) with `g_OrigSegPage2` mapped, preserve `IX`
+   (`push ix` / `pop ix` around `call 0x0005`), then call
+   `DOSMapper_SetPage2(seg)` and `Mem_Copy(g_DiskBuf, 0x8000 + off, 2048)`.
+   And always call `Wiz_MapperCleanup()` before returning to MSX-DOS 2 so all
+   allocated user segments are freed cleanly (`DOSMapper_Free`).
 
 5. NEXT STEPS — ROADMAP FOR CONTINUATION
 --------------------------------------------------------------------------------

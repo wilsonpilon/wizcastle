@@ -20,8 +20,9 @@ This **MSX2+ Enhanced Edition** preserves **100% gameplay compatibility** while 
   - **Music (lVGM):** Hybrid background soundtrack utilizing **PSG (AY-3-8910)** + **MSX-MUSIC (YM2413 / OPLL FM)** + **Konami SCC** (when present).
   - **Sound Effects (ayFX):** 16 distinct in-game sound effects (footsteps, stairs, sinkholes, warps, sword hits, fireballs, vendor chimes, victory/death fanfares) mixed on PSG Channel C.
 - **Bilingual Support:** Full in-game localization in **English (`EN`)** and **Portuguese (`PT-BR`)**.
-- **Adaptive Graphical Hardware Diagnostic Dashboard & Universal Boot Disk (`v1.6`):**
-  - **Universal Boot Disk (`DOS2_wizcastle.dsk`):** Bundled with `MSXDOS2.SYS` + `COMMAND2.COM` (MSX-DOS 2), `MSXDOS.SYS` + `COMMAND.COM` (MSX-DOS 1.11), and `AUTOEXEC.BAS` (MSX Disk-BASIC fallback) so **any** MSX machine (MSX1, MSX2, MSX2+, or turbo R) boots directly into the diagnostic report instead of dropping to a blank BASIC prompt.
+- **Adaptive Graphical Hardware Diagnostic Dashboard, Memory Mapper Asset Bank & Universal Boot Disk (`v2.1`):**
+  - **Universal Boot Disk (`DOS2_wizcastle.dsk`):** Bundled with `MSXDOS2.SYS` + `COMMAND2.COM` (MSX-DOS 2), `MSXDOS.SYS` + `COMMAND.COM` (MSX-DOS 1.11), `AUTOEXEC.BAS` (MSX Disk-BASIC fallback), and **`WIZDATA.DAT` (`112 KB`, 7 × 16 KB Mapper segments)** so **any** MSX machine (MSX1, MSX2, MSX2+, or turbo R) boots directly into the diagnostic report instead of dropping to a blank BASIC prompt.
+  - **MSX-DOS 2 Memory Mapper Bank (`src/wiz_mapper.c`):** Allocates 7 user segments (`112 KB`) via `DOSMapper_Alloc()`, loads `WIZDATA.DAT` with a graphical progress bar in `SCREEN 7`, verifies the `"WIZDATA1"` integrity signature, and streams `160×100` `SCREEN 12` YJK paintings (`[1]` Combat, `[2]` Victory, `[3]` Death) + `SCREEN 8` `16×16` dungeon tiles, treasure icons, and `32×32` room sprites (`[1]` Dragon, `[2]` Balrog, `[3]` Chest, `[4]` Elf) directly from banked RAM (`0x8000–0xBFFF`).
   - **`SCREEN 7` (`512×212`, 16 colors) on MSX2 / MSX2+ / turbo R:** High-resolution graphical inspector with `20×12` pixel badges (`[✓]` Green, `[✗]` Red, `[!]` Yellow, `[i]` Cyan).
   - **`SCREEN 2` (`256×192`, 32×24 tiles) on MSX1 (`TMS9918A`):** Custom 8×8 graphical badge tiles (`[✓]`, `[✗]`, `[!]`, `[i]`) and color-coded status rows using pure `R#0..R#7` register writes (preventing 3-bit `TMS9918A` register mirroring).
 
@@ -81,7 +82,9 @@ wizcastle/
 │           ├── project_config.js   # MSXgl build configuration (MSX2+, DOS2)
 │           ├── msxgl_config.h      # MSXgl engine module configuration
 │           ├── wizcastle.c         # Main entry point (DOS2 main)
-│           └── src/                # Game modules (hardware check, mapper, video, audio, logic)
+│           ├── tools/              # Asset conversion scripts (build_assets.ps1 -> WIZDATA.DAT)
+│           ├── emul/               # Bootable disk files, WIZDATA.DAT & DOS2_wizcastle.dsk
+│           └── src/                # Game modules (wiz_hwcheck, wiz_mapper, wiz_version)
 ├── winwiz/                         # Reference C++ Port by Daniel D. Miller (CC0 1.0)
 ├── CHANGELOG.md                    # Complete X.Y Version & Build History
 ├── resume.txt                      # Multi-PC Development Handoff & Progress Summary

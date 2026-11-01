@@ -12,6 +12,9 @@ All notable changes, specifications, and builds of this project are documented i
 
 ## [2.1] - 2026-10-31 — *Phase 2: MSX-DOS 2 Memory Mapper Manager & `WIZDATA.DAT` Asset Pipeline*
 
+> **Release Subtitle:** *MSX-DOS 2 Memory Mapper Bank Manager (`112 KB`), `WIZDATA.DAT` Asset Pipeline (`SCREEN 12` YJK Artwork + `SCREEN 8` Dungeon Tiles/Sprites) & Interactive Bank-Switching Showcase*
+> **Consolidated Release (`v2.1`):** Completes the core Phase 2 asset conversion and Memory Mapper infrastructure, bundling `WIZDATA.DAT` (`114,688 bytes` = `7 × 16 KB` segments) onto `DOS2_wizcastle.dsk`, allocating and loading all 7 segments into the MSX-DOS 2 Memory Mapper with a graphical `SCREEN 7` progress bar, and enabling real-time Page 2 (`0x8000–0xBFFF`) bank switching for `SCREEN 12` YJK paintings (`[1/2/3]`) and `SCREEN 8` dungeon tiles, treasure icons, and `32×32` sprites (`[1/2/3/4]`).
+
 ### Added
 - **Asset Conversion Pipeline (`tools/build_assets.ps1` -> `emul/WIZDATA.DAT`):**
   - Automated extraction and conversion of `winwiz/tiles32.png` and `winwiz/images.png` into a 7-segment (`114,688 bytes` = `112 KB`) MSX2+ asset pack (`WIZDATA.DAT`), bundled automatically onto `DOS2_wizcastle.dsk`:

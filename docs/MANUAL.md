@@ -51,8 +51,8 @@ Para a experiência completa, configure seu emulador ou hardware real com:
   * **MSX-MUSIC (YM2413 / OPLL — FM)** interno ou via cartucho (FM-PAC / Carnivore2) para a trilha sonora FM.
   * **Konami SCC / SCC+** (opcional, detectado automaticamente se inserido em um slot).
 
-### 4. Utilitário Gráfico de Diagnóstico de Hardware e Disco Universal (`v1.6`)
-A imagem de disco **`emul/dsk/DOS2_wizcastle.dsk`** conta com **Boot Universal em 3 camadas**, permitindo testar a compatibilidade em qualquer computador MSX com drive de disquete:
+### 4. Utilitário Gráfico de Diagnóstico de Hardware, Memory Mapper (`WIZDATA.DAT`) e Disco Universal (`v2.1`)
+A imagem de disco **`emul/dsk/DOS2_wizcastle.dsk`** conta com **Boot Universal em 3 camadas** e já traz embarcado o banco gráfico **`WIZDATA.DAT` (`112 KB`, 7 segmentos de 16 KB)**:
 1. **MSX-DOS 2 (`MSXDOS2.SYS` + `COMMAND2.COM`):** Inicia o `WIZCASTL.COM` em máquinas MSX2 / MSX2+ / turbo R com MSX-DOS 2 ou Nextor.
 2. **MSX-DOS 1 (`MSXDOS.SYS` + `COMMAND.COM`):** Inicia o `WIZCASTL.COM` em máquinas MSX1 / MSX2 / MSX2+ que possuem apenas ROM de MSX-DOS 1 e `>= 64 KB` de RAM.
 3. **MSX Disk-BASIC (`AUTOEXEC.BAS`):** Caso a máquina tenha `< 64 KB` de RAM (ex: MSX1 de 16 KB ou 32 KB sem RAM na Página 0) e caia no Disk-BASIC, executa automaticamente o `AUTOEXEC.BAS` exibindo o relatório de incompatibilidade.
@@ -64,12 +64,14 @@ Ao executar `WIZCASTL.COM`, o programa abre automaticamente um **Dashboard Gráf
   1. **OS / MSX-DOS:** Verifica se está rodando sob MSX-DOS 2 / Nextor (`Kernel >= 2.20`) e exibe o topo da TPA (`0006h`).
   2. **MSX Generation:** Verifica a geração da máquina (`MSX1`, `MSX2`, `MSX2+`, `MSX turbo R`) e a frequência vertical (`50Hz` PAL / `60Hz` NTSC).
   3. **Video / VDP & VRAM:** Identifica o VDP (`TMS9918A`, `V9938`, `V9958`) e a quantidade de VRAM (`16 KB`, `64 KB`, `128 KB`).
-  4. **Memory Mapper:** Consulta a Extended BIOS (`ALL_SEG` / `GET_VAR`) e mostra o Slot, RAM total em KB (ex: `1024 KB`) e RAM livre em KB.
+  4. **Memory Mapper:** Consulta a Extended BIOS (`ALL_SEG` / `GET_VAR`) e mostra o Slot, RAM total em KB (ex: `1024 KB`), RAM livre em KB e status do carregamento de `WIZDATA.DAT` (`112 KB / 7 segs`).
   5. **Chips de Áudio (PSG, FM OPLL, Konami SCC):** Testa os registradores do PSG e escaneia todos os slots primários e expandidos em busca do **MSX-MUSIC (YM2413)** e do **Konami SCC**, exibindo o Slot/Subslot exato onde cada chip foi encontrado.
 * **Atalhos Interativos (quando compatível):**
-  * **`[T]`:** Executa o teste visual de **`SCREEN 12`** (19.268 cores YJK) + **`SCREEN 8`** (mockup de 256 cores GRB da interface do jogo) + acorde simultâneo em **PSG + FM + SCC**.
-  * **`[S]`:** Reproduz o teste sonoro polifônico.
-  * **`[Q]` / `[ESC]`:** Restaura a fonte original da `SCREEN 0` (salva em `0xD800` da VRAM) e retorna limpo ao prompt do MSX-DOS.
+  * **`[T]`:** Aloca 7 segmentos na Memory Mapper (`112 KB`), carrega `WIZDATA.DAT` com barra gráfica de progresso e executa a demonstração interativa:
+    - **Na `SCREEN 12` (19.268 cores YJK):** Pressione **`[1]`** (Combat), **`[2]`** (Victory) ou **`[3]`** (Death) para alternar instantaneamente entre as artes YJK dos Segmentos 4, 5 e 6 da Mapper RAM sem acesso a disco; qualquer outra tecla avança para a `SCREEN 8`.
+    - **Na `SCREEN 8` (256 cores GRB):** Exibe o mapa `8×8` com os 40 tiles `16×16` reais cacheados na VRAM Page 1 (copiados via `HMMM`), os 10 ícones `16×16` de tesouros na bandeja e permite pressionar **`[1]`** (Dragon), **`[2]`** (Balrog), **`[3]`** (Chest) ou **`[4]`** (Elf) para trocar em tempo real o sprite `32×32` da Viewport paginando os Segmentos 0, 1 e 2 da Mapper!
+  * **`[S]`:** Reproduz o teste sonoro polifônico (`PSG + FM + SCC`).
+  * **`[Q]` / `[ESC]`:** Libera todos os segmentos alocados na Memory Mapper (`Wiz_MapperCleanup`), restaura a fonte original da `SCREEN 0` (salva em `0xD800` da VRAM) e retorna limpo ao prompt do MSX-DOS 2.
 
 ---
 
