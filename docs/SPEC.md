@@ -59,8 +59,8 @@ Durante a execução principal em **SCREEN 8** (`256×212`, 256 cores, 256 bytes
 
 ## 3. Especificação de Vídeo e Interface
 
-### 3.1 Telas em SCREEN 12 (MSX2+ YJK, 19.268 Cores)
-* **Modo VDP:** `VDP_MODE_SCREEN12` (`R#0 = 0Eh`, `R#1 = 40h`, `R#25 = 08h` — bit `YJK = 1`, `YAE = 0`).
+### 3.1 Telas em SCREEN 12 (MSX2+ YJK, 19.268 Cores — `v3.2`)
+* **Modo VDP:** `VDP_MODE_SCREEN12` (`R#0 = 0Eh`, `R#1 = 40h`, `R#25 = 08h` — bit `YJK = 1`, `YAE = 0`), inicializado via `Wiz_VideoInitScreen12()`, `Wiz_VideoDrawYJKBar()` e `Wiz_VideoShowScreen12()`.
 * **Uso:**
   1. **Splash Screen (Abertura):** Exibe a arte de abertura com o pergaminho da lenda de Zot e menu inferior de configuração inicial (Idioma `EN/PT`, Regras `WinWiz/1980`, Atributos `[S]elect/[D]erelict`).
   2. **Victory Screen:** Exibe a cena do riacho na floresta (`TILE_VICTORY` de [images.png](../winwiz/images.png)) quando o jogador escapa vivo com o *Orb of Zot*.

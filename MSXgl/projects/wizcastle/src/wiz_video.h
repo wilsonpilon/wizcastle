@@ -90,8 +90,29 @@
 #define WIZ_UI_TERM_BOX_Y2      211
 
 //=============================================================================
+// SCREEN 12 (19,268 YJK COLORS) EVENT SCREEN TYPES
+//=============================================================================
+
+enum WizScreen12Type
+{
+	WIZ_SC12_SPLASH  = 0,   // Title / Legend of Zot (WIZ_SEG_YJK_COMBAT)
+	WIZ_SC12_VICTORY = 1,   // Forest Stream Escape Victory (WIZ_SEG_YJK_VICTORY)
+	WIZ_SC12_DEATH   = 2    // Graveyard Game Over Epitaph (WIZ_SEG_YJK_DEATH)
+};
+
+//=============================================================================
 // PUBLIC VIDEO ENGINE FUNCTIONS
 //=============================================================================
+
+// Initialize V9958 SCREEN 12 (256x212, 19,268 YJK colors) with MSXgl Print fix
+void Wiz_VideoInitScreen12(void);
+
+// Draw a 4-pixel-aligned YJK color bar/fill in SCREEN 12
+void Wiz_VideoDrawYJKBar(u8 x, u8 y, u16 width, u8 height, u8 luma, i8 j, i8 k);
+
+// Render a full SCREEN 12 Event Screen (WIZ_SC12_SPLASH, WIZ_SC12_VICTORY, WIZ_SC12_DEATH)
+// streaming the 160x100 YJK artwork from Mapper Segments 4..6 with themed YJK banners
+void Wiz_VideoShowScreen12(u8 sc12Type, const c8* line1, const c8* line2, const c8* prompt);
 
 // Initialize V9958 SCREEN 8 (256x212, 256 GRB colors), clear VRAM Page 0,
 // upload 40 16x16 Map Tiles + 10 Treasure Icons into VRAM Page 1 (Y=256..319),

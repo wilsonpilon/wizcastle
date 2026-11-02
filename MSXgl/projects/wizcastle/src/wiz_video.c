@@ -22,6 +22,135 @@
 extern const u8 g_Font_MGL_Sample6[];
 
 //=============================================================================
+// PUBLIC FUNCTIONS — ITEM 2 (v3.2): SCREEN 12 (19,268 YJK COLORS) EVENT SCREENS
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+// Initialize V9958 SCREEN 12 (256x212, 19,268 YJK colors) with MSXgl Print fix
+void Wiz_VideoInitScreen12(void)
+{
+	VDP_SetMode(VDP_MODE_SCREEN12);
+	// Critical MSXgl fix: Print_SetMode only handles VDP_MODE_GRAPHIC7 (8)
+	g_VDP_Data.Mode = VDP_MODE_GRAPHIC7;
+
+	VDP_EnableSprite(FALSE);
+	VDP_SetPage(0);
+	VDP_SetColor(0x00);
+	VDP_CommandHMMV(0, 0, 256, 212, 0x00);
+	VDP_CommandWait();
+
+	Print_SetBitmapFont(g_Font_MGL_Sample6);
+	Print_SetColor(0xF8, 0x00); // Pure YJK White (Luma 31, J=0, K=0) on Black
+}
+
+//-----------------------------------------------------------------------------
+// Draw a 4-pixel-aligned YJK color bar/fill in SCREEN 12
+void Wiz_VideoDrawYJKBar(u8 x, u8 y, u16 width, u8 height, u8 luma, i8 j, i8 k)
+{
+	u8 alignedX = x & 0xFC;
+	u16 alignedW = (width + 3) & 0xFFFC;
+	u8 y5 = (luma & 0x1F) << 3;
+	u8 uJ = (u8)j & 0x3F;
+	u8 uK = (u8)k & 0x3F;
+	u8 pkt[4];
+	pkt[0] = y5 | (uK & 0x07);
+	pkt[1] = y5 | ((uK >> 3) & 0x07);
+	pkt[2] = y5 | (uJ & 0x07);
+	pkt[3] = y5 | ((uJ >> 3) & 0x07);
+
+	VDP_CommandWait();
+	u16 baseRowAddr = ((u16)y << 8) + alignedX;
+	for (u16 dx = 0; dx < alignedW; dx += 4)
+	{
+		VDP_WriteVRAM_128K(pkt, baseRowAddr + dx, 0, 4);
+	}
+	for (u8 dy = 1; dy < height; ++dy)
+	{
+		VDP_CommandHMMM(alignedX, y, alignedX, y + dy, alignedW, 1);
+	}
+	VDP_CommandWait();
+}
+
+//-----------------------------------------------------------------------------
+// Render a full SCREEN 12 Event Screen (WIZ_SC12_SPLASH, WIZ_SC12_VICTORY, WIZ_SC12_DEATH)
+// streaming the 160x100 YJK artwork from Mapper Segments 4..6 with themed YJK banners
+void Wiz_VideoShowScreen12(u8 sc12Type, const c8* line1, const c8* line2, const c8* prompt)
+{
+	Wiz_VideoInitScreen12();
+
+	u8 yjkSeg = WIZ_SEG_YJK_COMBAT;
+	const c8* headerTitle = "THE WIZARD'S CASTLE - MSX2+ DELUXE";
+	const c8* bannerSub   = "THE LEGEND OF ZOT'S ORB OF POWER";
+	u8 barLuma = 12;
+	i8 barJ = -8, barK = -10; // Royal Blue YJK tint
+
+	if (sc12Type == WIZ_SC12_VICTORY)
+	{
+		yjkSeg      = WIZ_SEG_YJK_VICTORY;
+		headerTitle = "GLORIOUS VICTORY! YOU ESCAPED ZOT!";
+		bannerSub   = "THE ORB OF ZOT SHINES IN THE SUNLIGHT!";
+		barLuma = 14; barJ = -12; barK = 18; // Emerald Green YJK tint
+	}
+	else if (sc12Type == WIZ_SC12_DEATH)
+	{
+		yjkSeg      = WIZ_SEG_YJK_DEATH;
+		headerTitle = "GAME OVER - ANOTHER HERO FALLS...";
+		bannerSub   = "REST IN PEACE BENEATH ZOT'S DUNGEON";
+		barLuma = 12; barJ = 24; barK = -8;  // Crimson Red YJK tint
+	}
+
+	// 1. Top YJK Header Banner (Y=0..12) + Gold Divider Line (Y=13)
+	Wiz_VideoDrawYJKBar(0, 0, 256, 12, barLuma, barJ, barK);
+	Wiz_VideoDrawYJKBar(0, 12, 256, 2, 26, 14, 10); // Bright Gold YJK bar
+
+	Print_SetColor(0xF8, 0x00);
+	Print_SetPosition(12, 2);
+	Print_DrawText(headerTitle);
+
+	// 2. Ornate Frame (X=44..211, Y=17..122) + 160x100 YJK Painting from Mapper
+	Wiz_VideoDrawYJKBar(44, 17, 168, 106, 22, 12, 8); // Gold outer frame
+	Draw_Box(46, 19, 209, 120, 0xF8, 0);
+	VDP_CommandWait();
+
+	if (Wiz_MapperIsReady())
+	{
+		Wiz_MapperDrawYJKPanel(yjkSeg, 48, 20);
+	}
+
+	// 3. Narrative Scroll Panel (Y=126..209)
+	Wiz_VideoDrawYJKBar(0, 126, 256, 12, barLuma, barJ, barK);
+	Draw_Box(0, 126, 255, 209, 0xF8, 0);
+	VDP_CommandWait();
+
+	Print_SetColor(0xF8, 0x00);
+	Print_SetPosition(12, 128);
+	Print_DrawText(bannerSub);
+
+	if (line1)
+	{
+		Print_SetPosition(8, 144);
+		Print_DrawText(line1);
+	}
+	if (line2)
+	{
+		Print_SetPosition(8, 156);
+		Print_DrawText(line2);
+	}
+
+	// Interactive mode selector hint
+	Print_SetPosition(8, 174);
+	Print_DrawText("[1] Splash  [2] Victory  [3] Game Over");
+
+	if (prompt)
+	{
+		Wiz_VideoDrawYJKBar(4, 192, 248, 14, 8, -6, -8);
+		Print_SetPosition(8, 195);
+		Print_DrawText(prompt);
+	}
+	VDP_CommandWait();
+}
+
+//=============================================================================
 // PUBLIC FUNCTIONS — ITEM 1 (v3.1): SCREEN 8 INIT, VRAM PAGE 1 CACHE & UI FRAMES
 //=============================================================================
 
@@ -160,7 +289,51 @@ void Wiz_VideoRunShowcase(void)
 		Wiz_MapperInitAndLoad();
 	}
 
-	// Initialize SCREEN 8 + VRAM Page 1 Tile/Icon Cache + 6x8 Font
+	// --- STEP A (v3.2): SCREEN 12 Event Screens Showcase ---
+	Wiz_VideoShowScreen12(
+		WIZ_SC12_VICTORY,
+		"You emerge from the Castle carrying the",
+		"priceless ORB OF ZOT and the RUNESTAFF!",
+		"Any other key -> SCREEN 8 Dungeon UI"
+	);
+
+	while (1)
+	{
+		c8 k = Wiz_GetKeyNoEcho();
+		if (k == '1')
+		{
+			Wiz_VideoShowScreen12(
+				WIZ_SC12_SPLASH,
+				"Many cycles ago in the Kingdom of N'dic,",
+				"the gnomic wizard Zot forged his ORB...",
+				"Any other key -> SCREEN 8 Dungeon UI"
+			);
+		}
+		else if (k == '2')
+		{
+			Wiz_VideoShowScreen12(
+				WIZ_SC12_VICTORY,
+				"You emerge from the Castle carrying the",
+				"priceless ORB OF ZOT and the RUNESTAFF!",
+				"Any other key -> SCREEN 8 Dungeon UI"
+			);
+		}
+		else if (k == '3')
+		{
+			Wiz_VideoShowScreen12(
+				WIZ_SC12_DEATH,
+				"At the end of your noble quest, the",
+				"monsters of Zot's Castle claimed you!",
+				"Any other key -> SCREEN 8 Dungeon UI"
+			);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	// --- STEP B (v3.1): Initialize SCREEN 8 + VRAM Page 1 Cache + 6-Region UI ---
 	Wiz_VideoInitScreen8();
 
 	// Render the 6-Region Main Dungeon UI Skeleton

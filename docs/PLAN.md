@@ -93,7 +93,7 @@ flowchart LR
 1. **`tools/build_assets.js`**: Extrai e converte os 40 sprites (`32×32`, `16×16`, `12×12`) de [tiles32.png](../winwiz/tiles32.png) para SCREEN 8, converte as 3 artes de [images.png](../winwiz/images.png) para SCREEN 12 comprimidas com ZX0, compila as trilhas `.LVM` (PSG+OPLL+SCC) e `.AFX` (ayFX) e gera `WIZDATA.DAT`.
 2. **`wizcastle.c` & `src/wiz_hwcheck.c`**: Entrada principal e diagnóstico completo de hardware (MSX1/2/2+/TR, VDP/VRAM, MSX-DOS 1/2, Memory Mapper, PSG, FM/OPLL, SCC).
 3. **`src/wiz_mapper.c`**: Gerenciamento de segmentos de 16 KB do MSX-DOS 2 e carregamento de `WIZDATA.DAT`.
-4. **`src/wiz_video.c`**: Motor gráfico SCREEN 12 e SCREEN 8 acelerado por hardware V9958 (`HMMM`, `YMMM`, `LMMM`, Sprites Modo 2) — Passo 1/7 (`v3.1`: Setup `SCREEN 8`, Cache VRAM Page 1 e Molduras) implementado.
+4. **`src/wiz_video.c`**: Motor gráfico SCREEN 12 e SCREEN 8 acelerado por hardware V9958 (`HMMM`, `YMMM`, `LMMM`, Sprites Modo 2) — Passos 1 e 2/7 (`v3.1` Setup `SCREEN 8` + `v3.2` Telas `SCREEN 12` YJK) implementados.
 5. **`src/wiz_audio.c`**: Reprodutor de música PSG+FM+SCC via lVGM + 16 efeitos sonoros via ayFX no VBlank.
 6. **`src/wiz_castle.c`, `src/wiz_gameplay.c`, `src/wiz_combat.c`**: Lógica completa de geração do castelo 8×8×8, exploração, objetos, maldições e combate nos modos `WinWiz` e `Classic 1980`.
 7. **`src/wiz_dialogs.c` & `src/wiz_locale.c`**: Telas de criação de personagem, loja do mercador, enigma de Zot, ajuda e localização bilíngue (`EN` / `PT-BR`).

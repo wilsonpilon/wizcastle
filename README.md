@@ -42,6 +42,10 @@ This **MSX2+ Enhanced Edition** preserves **100% gameplay compatibility** while 
 
 ### 2. Phase 3 Video Engine Showcase (`[V]` Key) & Hardware Verification (`[T]` Key)
 
+| `v3.2` — `SCREEN 12` Victory Screen (19,268 YJK Colors) | `v3.2` — `SCREEN 12` Game Over / Death Screen (19,268 YJK Colors) |
+| :---: | :---: |
+| ![v3.2 SCREEN 12 Victory](docs/images/msx_v3_2_screen12_victory.png) | ![v3.2 SCREEN 12 Death](docs/images/msx_v3_2_screen12_death.png) |
+
 | `v3.1` — `SCREEN 8` 6-Region UI Skeleton & VRAM Page 1 Cache | `WIZDATA.DAT` (`112 KB`) Memory Mapper Loader (`SCREEN 7`) |
 | :---: | :---: |
 | ![v3.1 SCREEN 8 UI Frame](docs/images/msx_v3_1_screen8_frame.png) | ![Mapper Loading Bar](docs/images/msx_mapper_loading.png) |

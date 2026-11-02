@@ -10,6 +10,19 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [3.2] - 2026-11-01 — *Phase 3 (Step 2/7): `SCREEN 12` (19,268 YJK Colors) Event Screens Engine (Splash, Victory & Game Over)*
+
+> **Release Subtitle:** *`SCREEN 12` (19,268 YJK Colors) Event Presentation Engine (`Wiz_VideoInitScreen12`, `Wiz_VideoDrawYJKBar`, `Wiz_VideoShowScreen12`) for Title/Splash, Victory & Game Over/Death Screens*
+
+### Added
+- **`SCREEN 12` Event Screens Engine (`src/wiz_video.h`, `src/wiz_video.c`):**
+  - Implemented `Wiz_VideoInitScreen12()` to initialize V9958 `SCREEN 12` (`256×212`, 19,268 YJK colors) with the mandatory `g_VDP_Data.Mode = VDP_MODE_GRAPHIC7` fix for `MSXgl` bitmap text rendering.
+  - Implemented `Wiz_VideoDrawYJKBar()` to encode 4-pixel-aligned `(Y, J, K)` color packets and hardware-fill (`HMMM`) themed banners in Royal Blue (`WIZ_SC12_SPLASH`), Emerald Green (`WIZ_SC12_VICTORY`), Crimson Red (`WIZ_SC12_DEATH`), and Bright Gold.
+  - Implemented `Wiz_VideoShowScreen12()` to stream the `160×100` YJK artwork from Mapper Segments 4, 5, and 6 (`WIZ_SEG_YJK_COMBAT`, `WIZ_SEG_YJK_VICTORY`, `WIZ_SEG_YJK_DEATH`) inside a double-beveled YJK gold frame alongside a narrative scroll box.
+  - Integrated interactive `SCREEN 12` event switching (`[1]` Splash, `[2]` Victory, `[3]` Game Over) into `Wiz_VideoRunShowcase()` (`[V]` key).
+
+---
+
 ## [3.1] - 2026-11-01 — *Phase 3 (Step 1/7): `SCREEN 8` Video Engine Initialization, VRAM Page 1 Cache & Main Dungeon UI Window Frames*
 
 > **Release Subtitle:** *`SCREEN 8` (256-Color GRB) Video Engine Initialization, Complete VRAM Page 1 Tile/Gem/Backdrop Cache (`Y=256..383`) & 6-Region Beveled RPG Window Skeleton (`src/wiz_video.c`)*

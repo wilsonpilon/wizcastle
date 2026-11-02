@@ -72,9 +72,9 @@ Além de ser **100% compatível** com a lógica e regras do jogo original e do p
 ---
 
 ### Fase 3: Motor de Vídeo (SCREEN 12 & SCREEN 8) e Áudio (PSG + FM + SCC + SFX)
-- [ ] Implementar `src/wiz_video.c` (Em andamento — Passo 1/7 concluído em `v3.1`):
+- [ ] Implementar `src/wiz_video.c` (Em andamento — Passos 1 e 2/7 concluídos em `v3.2`):
   - [x] **Passo 1 (`v3.1`):** Inicialização do `SCREEN 8`, upload completo do cache de 40 tiles `16×16`, 20 ícones de tesouros (Owned/Unowned) e 2 fundos `48×48` para a VRAM Page 1 (`10000h–1FFFFh`, `Y=256..383`), e desenho das 6 molduras chanfradas da interface (`Wiz_VideoInitScreen8`, `Wiz_VideoDrawBevelBox`, `Wiz_VideoDrawMainFrame`).
-  - [ ] **Passo 2 (`v3.2`):** Exibição de telas `SCREEN 12` (Splash, Victory, Game Over).
+  - [x] **Passo 2 (`v3.2`):** Exibição de telas `SCREEN 12` (Splash, Victory, Game Over) em 19.268 cores YJK com barras temáticas YJK e caixa de narrativa (`Wiz_VideoInitScreen12`, `Wiz_VideoDrawYJKBar`, `Wiz_VideoShowScreen12`).
   - [ ] **Passo 3 (`v3.3`):** Renderização da Bandeja dos 10 Ícones de Tesouros (Owned vs. Unowned via `HMMM`).
   - [ ] **Passo 4 (`v3.4`):** Renderização da **Viewport da Sala (`48×48`)** com cenários de masmorra, sprites `32×32` e barra do monstro.
   - [ ] **Passo 5 (`v3.5`):** Renderização do HUD de atributos, equipamentos, recursos e maldições.

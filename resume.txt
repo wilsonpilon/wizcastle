@@ -1,7 +1,7 @@
 ================================================================================
  THE WIZARD'S CASTLE - MSX2+ DELUXE EDITION
  PROJECT HANDOFF & CONTINUATION SUMMARY (resume.txt)
- Last Updated: 2026-11-01 | Current Version: v3.1 (Phase 3 Step 1/7 Video Frame)
+ Last Updated: 2026-11-01 | Current Version: v3.2 (Phase 3 Step 2/7 SCREEN 12)
 ================================================================================
 
 1. PROJECT OVERVIEW & REPOSITORY
@@ -111,7 +111,7 @@
 - PHASE 3 (`v3.x` — Video & Audio Engines — IN PROGRESS):
   1. `src/wiz_video.c` (7 incremental steps, each with its own release):
      - [x] `v3.1` (Step 1/7): `SCREEN 8` init, VRAM Page 1 cache (`Y=256..383`), and 6 beveled UI frames (`Wiz_VideoInitScreen8`, `Wiz_VideoDrawMainFrame`).
-     - [ ] `v3.2` (Step 2/7): `SCREEN 12` (19,268 YJK colors) Splash, Victory & Death event screens (`Wiz_VideoShowScreen12`).
+     - [x] `v3.2` (Step 2/7): `SCREEN 12` (19,268 YJK colors) Splash, Victory & Death event screens (`Wiz_VideoInitScreen12`, `Wiz_VideoDrawYJKBar`, `Wiz_VideoShowScreen12`).
      - [ ] `v3.3` (Step 3/7): 10-Treasure Tray renderer (`Wiz_VideoUpdateTreasures`).
      - [ ] `v3.4` (Step 4/7): `48x48` Room & Combat Viewport + `32x32` sprite + Monster HP bar (`Wiz_VideoUpdateViewport`).
      - [ ] `v3.5` (Step 5/7): Character Status HUD & Curses panel (`Wiz_VideoUpdateHUD`).
