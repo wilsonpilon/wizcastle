@@ -29,7 +29,8 @@ ProjName = "wizcastle";
 ProjModules = [
 	"wizcastle",
 	"src/wiz_hwcheck",
-	"src/wiz_mapper"
+	"src/wiz_mapper",
+	"src/wiz_video"
 ];
 
 //-- List of library modules to build (array)

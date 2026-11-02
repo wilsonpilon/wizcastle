@@ -50,9 +50,10 @@ Durante a execução principal em **SCREEN 8** (`256×212`, 256 cores, 256 bytes
   * `Y = 212..255` (`0D400h–0FFFFh`): Buffer off-screen para rolagem rápida do terminal e double-buffering da Viewport `48×48`.
   * `0FA00h–0FFFFh`: Tabelas de Sprites Modo 2 (Sprite Attribute Table em `0FA00h`, Sprite Color Table em `0F800h`, Sprite Pattern Table em `0F000h`).
 * **VRAM Page 1 (`10000h–1FFFFh`, `Y = 256..511`):**
-  * `Y = 256..319`: Atlas de **40 Tiles `16×16`** do mapa (16 tiles por linha de 256 px = 3 linhas de 16 px = 48 linhas de altura) + **10 Ícones `12×12`** de tesouros.
-  * `Y = 320..383`: Atlas da **Fonte `6×8` pré-colorida** nas 8 cores de atributo do terminal (`TERM_NORMAL`, `TERM_INFO`, `TERM_QUERY`, `TERM_PLAYER_HIT`, `TERM_MONSTER_HIT`, `TERM_RUNESTAFF`, `TERM_DEATH`, `TERM_ATMOSPHERE`).
-  * `Y = 384..479`: Elementos de UI (molduras de janela, botões de diálogo, ícones de armas/armaduras/lâmpada).
+  * `Y = 256..303`: Atlas dos **40 Tiles `16×16`** do mapa (16 tiles por linha de 256 px = 3 linhas de 16 px = 48 linhas de altura).
+  * `Y = 304..319`: **10 Ícones `16×16` de Tesouros Conquistados** (borda dourada e cores vivas, `X = 0..159`).
+  * `Y = 320..335`: **10 Ícones `16×16` de Tesouros Não Encontrados** (silhueta escura e borda cinza, `X = 0..159`).
+  * `Y = 336..383`: **2 Cenários `48×48` da Viewport da Sala** (`X = 0..47` = Exploração com moldura dourada; `X = 48..95` = Combate com moldura carmesim).
 
 ---
 

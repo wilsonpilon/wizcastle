@@ -10,6 +10,21 @@ All notable changes, specifications, and builds of this project are documented i
 
 ---
 
+## [3.1] - 2026-11-01 — *Phase 3 (Step 1/7): `SCREEN 8` Video Engine Initialization, VRAM Page 1 Cache & Main Dungeon UI Window Frames*
+
+> **Release Subtitle:** *`SCREEN 8` (256-Color GRB) Video Engine Initialization, Complete VRAM Page 1 Tile/Gem/Backdrop Cache (`Y=256..383`) & 6-Region Beveled RPG Window Skeleton (`src/wiz_video.c`)*
+
+### Added & Fixed
+- **Video Engine Module (`src/wiz_video.h`, `src/wiz_video.c`):**
+  - Defined the `SCREEN 8` GRB (`3-3-2`: `GGGRRRBB`) semantic color palette (`WIZ_COL_*`) and exact pixel geometry for all 6 main UI regions (`256×212`).
+  - Implemented `Wiz_VideoInitScreen8()` to initialize V9958 `SCREEN 8`, clear VRAM Page 0 (`Y=0..255`), upload all off-screen tile/icon/backdrop assets into VRAM Page 1 (`0x10000+`), and configure `g_Font_MGL_Sample6` (`6×8`) for bitmap text rendering.
+  - Implemented `Wiz_VideoDrawBevelBox()` and `Wiz_VideoDrawMainFrame()` to render the 6 beveled RPG UI regions: Top Title Banner (`256×11`), `8×8` Dungeon Map Frame (`128×128` interior), `48×48` Room Viewport Frame, Monster/Room Status Bar Strip, Character Status HUD Panel, 10-Slot Treasure Tray, and 8-Line Color Message Terminal.
+  - Added interactive `[V] Video Engine Demo` (`Wiz_VideoRunShowcase`) accessible directly from the `SCREEN 7` Hardware Diagnostic Dashboard.
+- **Complete VRAM Page 1 Asset Cache (`src/wiz_mapper.h`, `src/wiz_mapper.c`):**
+  - Updated `Wiz_MapperUploadTilesToVRAMPage1()` to cache all 40 `16×16` Map Tiles (`Y=256..303`), 10 Owned Gold-Bordered `16×16` Treasure Icons from Segment 2 (`0x2000` -> `Y=304..319`), 10 Unowned Dim `16×16` Treasure Silhouettes from Segment 2 (`0x2A00` -> `Y=320..335`), and 2 `48×48` Dungeon Viewport Brick Backdrops from Segment 3 (`0x2800` -> `Y=336..383`).
+
+---
+
 ## [2.1] - 2026-10-31 — *Phase 2: MSX-DOS 2 Memory Mapper Manager & `WIZDATA.DAT` Asset Pipeline*
 
 > **Release Subtitle:** *MSX-DOS 2 Memory Mapper Bank Manager (`112 KB`), `WIZDATA.DAT` Asset Pipeline (`SCREEN 12` YJK Artwork + `SCREEN 8` Dungeon Tiles/Sprites) & Interactive Bank-Switching Showcase*

@@ -605,9 +605,9 @@ static void RenderDiagnosticScreen7(void)
 	VDP_CommandHMMV(4, 190, 504, 18, 0x44);
 	VDP_CommandWait();
 	Print_SetColor(15, 4);
-	Print_SetPosition(28, 195);
+	Print_SetPosition(16, 195);
 	if (g_HwInfo.isCompatible)
-		Print_DrawText("[T] Visual & Audio Test (SC12/SC8)   [S] Test Sound   [Q/ESC] Exit DOS");
+		Print_DrawText("[V] Video Engine Demo   [T] HW Test (SC12/SC8)   [S] Sound   [Q/ESC] Exit");
 	else
 		Print_DrawText("Press any key to return to MSX-DOS...");
 	VDP_CommandWait();

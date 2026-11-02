@@ -72,13 +72,14 @@ Além de ser **100% compatível** com a lógica e regras do jogo original e do p
 ---
 
 ### Fase 3: Motor de Vídeo (SCREEN 12 & SCREEN 8) e Áudio (PSG + FM + SCC + SFX)
-- [ ] Implementar `src/wiz_video.c`:
-  - [ ] Exibição de telas SCREEN 12 (Splash, Victory, Game Over).
-  - [ ] Inicialização do SCREEN 8 e upload do cache de tiles `16×16` e fontes `6×8` para a VRAM Page 1 (`10000h–1FFFFh`).
-  - [ ] Renderização do Mapa 8×8 via `VDP_CommandHMMM` e cursor animado via **Sprite Modo 2**.
-  - [ ] Renderização da **Viewport da Sala (`48×48`)** com cenários de masmorra e sprites `32×32` de objetos/monstros/personagens.
-  - [ ] Renderização do HUD de atributos, equipamentos, maldições e bandeja dos 10 ícones de tesouros.
-  - [ ] Terminal colorido de 8 linhas com rolagem via `VDP_CommandYMMM`.
+- [ ] Implementar `src/wiz_video.c` (Em andamento — Passo 1/7 concluído em `v3.1`):
+  - [x] **Passo 1 (`v3.1`):** Inicialização do `SCREEN 8`, upload completo do cache de 40 tiles `16×16`, 20 ícones de tesouros (Owned/Unowned) e 2 fundos `48×48` para a VRAM Page 1 (`10000h–1FFFFh`, `Y=256..383`), e desenho das 6 molduras chanfradas da interface (`Wiz_VideoInitScreen8`, `Wiz_VideoDrawBevelBox`, `Wiz_VideoDrawMainFrame`).
+  - [ ] **Passo 2 (`v3.2`):** Exibição de telas `SCREEN 12` (Splash, Victory, Game Over).
+  - [ ] **Passo 3 (`v3.3`):** Renderização da Bandeja dos 10 Ícones de Tesouros (Owned vs. Unowned via `HMMM`).
+  - [ ] **Passo 4 (`v3.4`):** Renderização da **Viewport da Sala (`48×48`)** com cenários de masmorra, sprites `32×32` e barra do monstro.
+  - [ ] **Passo 5 (`v3.5`):** Renderização do HUD de atributos, equipamentos, recursos e maldições.
+  - [ ] **Passo 6 (`v3.6`):** Terminal colorido de 8 linhas com rolagem via `VDP_CommandYMMM` e *word-wrap*.
+  - [ ] **Passo 7 (`v3.7`):** Renderização do Mapa `8×8` via `VDP_CommandHMMM` e cursor animado via **Sprite Modo 2**.
 - [ ] Implementar `src/wiz_audio.c`:
   - [ ] Hook `H_TIMI` (VBlank) integrando `LVGM_Decode()`, `ayFX_Update()` e `PSG_Apply()`.
   - [ ] Disparo dos 16 efeitos sonoros contextuais durante a exploração e combate.

@@ -105,8 +105,14 @@ void Wiz_MapperUploadTilesToVRAMPage1(void);
 // Hardware-blit a 16x16 Map Tile (objId 0..39) from VRAM Page 1 cache to Page 0 (destX, destY)
 void Wiz_MapperBlitTile16(u8 objId, u8 destX, u8 destY);
 
-// Hardware-blit a 16x16 Treasure Icon (treasIdx 0..9) from VRAM Page 1 cache to Page 0 (destX, destY)
+// Hardware-blit a 16x16 Owned Treasure Icon (treasIdx 0..9) from VRAM Page 1 cache to Page 0 (destX, destY)
 void Wiz_MapperBlitTreasureIcon16(u8 treasIdx, u8 destX, u8 destY);
+
+// Hardware-blit a 16x16 Unowned Treasure Silhouette (treasIdx 0..9) from VRAM Page 1 cache to Page 0 (destX, destY)
+void Wiz_MapperBlitUnownedTreasureIcon16(u8 treasIdx, u8 destX, u8 destY);
+
+// Hardware-blit a 48x48 Dungeon Viewport Brick Background (0=Explore, 1=Combat) from VRAM Page 1 cache
+void Wiz_MapperBlitViewportBg48(bool isCombat, u8 destX, u8 destY);
 
 // Draw a 32x32 Sprite (objId 0..39) from Mapper Segments 0..2 into SCREEN 8 Page 0 (destX, destY)
 void Wiz_MapperDrawSprite32(u8 objId, u8 destX, u8 destY);

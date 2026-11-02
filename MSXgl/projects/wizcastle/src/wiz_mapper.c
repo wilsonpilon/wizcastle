@@ -272,8 +272,8 @@ void Wiz_MapperDrawYJKPanel(u8 yjkSeg, u8 destX, u8 destY)
 }
 
 //-----------------------------------------------------------------------------
-// Upload all 40 16x16 Map Tiles and 10 16x16 Treasure Icons from Segment 3
-// into SCREEN 8 VRAM Page 1 (off-screen cache at Y=256..319) for fast VDP HMMM blits
+// Upload all 40 16x16 Map Tiles, 10 Owned + 10 Unowned Treasure Icons, and
+// 2 48x48 Dungeon Viewport Backdrops into SCREEN 8 VRAM Page 1 (Y=256..383)
 void Wiz_MapperUploadTilesToVRAMPage1(void)
 {
 	if (!g_MapperReady)
@@ -282,7 +282,7 @@ void Wiz_MapperUploadTilesToVRAMPage1(void)
 	VDP_CommandWait();
 	Wiz_MapperMapSeg(WIZ_SEG_MAP_TILES);
 
-	// 1. Upload 40 16x16 Map Tiles into VRAM Page 1 (destHigh = 1):
+	// 1. Upload 40 16x16 Map Tiles from Segment 3 (0x8000) into VRAM Page 1 (destHigh = 1):
 	//    Tiles 0..15  -> Y = 256..271 (offsetY = 0..15),  X = (id & 15) * 16
 	//    Tiles 16..31 -> Y = 272..287 (offsetY = 16..31), X = (id & 15) * 16
 	//    Tiles 32..39 -> Y = 288..303 (offsetY = 32..47), X = (id & 15) * 16
@@ -299,18 +299,38 @@ void Wiz_MapperUploadTilesToVRAMPage1(void)
 		}
 	}
 
-	// 2. Upload 10 16x16 Treasure Icons (at 0x8000 + 0x2800) into VRAM Page 1:
-	//    Icons 0..9 -> Y = 304..319 (offsetY = 48..63), X = idx * 16
+	// 2. Upload 2 48x48 Dungeon Viewport Backdrops from Segment 3 (0x8000 + 0x2800) into VRAM Page 1:
+	//    Backdrop 0 (Explore Gold)   -> Y = 336..383 (offsetY = 80..127), X = 0..47
+	//    Backdrop 1 (Combat Crimson) -> Y = 336..383 (offsetY = 80..127), X = 48..95
+	for (u8 bg = 0; bg < 2; ++bg)
+	{
+		const u8* bgPtr = (const u8*)(0x8000 + 0x2800 + ((u16)bg * 2304));
+		u8 baseX = bg * 48;
+		u8 baseY = 80; // Y = 256 + 80 = 336
+
+		for (u8 r = 0; r < 48; ++r)
+		{
+			u16 vramLow = ((u16)(baseY + r) << 8) + baseX;
+			VDP_WriteVRAM_128K(bgPtr + ((u16)r * 48), vramLow, 1, 48);
+		}
+	}
+
+	// 3. Switch to Segment 2 (WIZ_SEG_SPR32_2) and upload 10 Owned + 10 Unowned 16x16 Treasure Icons:
+	//    Owned   (0x8000 + 0x2000) -> Y = 304..319 (offsetY = 48..63), X = idx * 16
+	//    Unowned (0x8000 + 0x2A00) -> Y = 320..335 (offsetY = 64..79), X = idx * 16
+	Wiz_MapperMapSeg(WIZ_SEG_SPR32_2);
 	for (u8 t = 0; t < 10; ++t)
 	{
-		const u8* iconPtr = (const u8*)(0x8000 + 0x2800 + ((u16)t << 8));
+		const u8* ownedPtr   = (const u8*)(0x8000 + 0x2000 + ((u16)t << 8));
+		const u8* unownedPtr = (const u8*)(0x8000 + 0x2A00 + ((u16)t << 8));
 		u8 baseX = t << 4;
-		u8 baseY = 48; // Y = 256 + 48 = 304
 
 		for (u8 r = 0; r < 16; ++r)
 		{
-			u16 vramLow = ((u16)(baseY + r) << 8) + baseX;
-			VDP_WriteVRAM_128K(iconPtr + (r << 4), vramLow, 1, 16);
+			u16 vramOwned   = ((u16)(48 + r) << 8) + baseX;
+			u16 vramUnowned = ((u16)(64 + r) << 8) + baseX;
+			VDP_WriteVRAM_128K(ownedPtr   + (r << 4), vramOwned,   1, 16);
+			VDP_WriteVRAM_128K(unownedPtr + (r << 4), vramUnowned, 1, 16);
 		}
 	}
 
@@ -330,7 +350,7 @@ void Wiz_MapperBlitTile16(u8 objId, u8 destX, u8 destY)
 }
 
 //-----------------------------------------------------------------------------
-// Hardware-blit a 16x16 Treasure Icon (treasIdx 0..9) from VRAM Page 1 cache to Page 0 (destX, destY)
+// Hardware-blit a 16x16 Owned Treasure Icon (treasIdx 0..9) from VRAM Page 1 cache to Page 0 (destX, destY)
 void Wiz_MapperBlitTreasureIcon16(u8 treasIdx, u8 destX, u8 destY)
 {
 	if (treasIdx >= 10)
@@ -339,6 +359,27 @@ void Wiz_MapperBlitTreasureIcon16(u8 treasIdx, u8 destX, u8 destY)
 	u16 srcX = (u16)treasIdx << 4;
 	u16 srcY = 256 + 48; // Y = 304 in VRAM Page 1
 	VDP_CommandHMMM(srcX, srcY, destX, destY, 16, 16);
+}
+
+//-----------------------------------------------------------------------------
+// Hardware-blit a 16x16 Unowned Treasure Silhouette (treasIdx 0..9) from VRAM Page 1 cache
+void Wiz_MapperBlitUnownedTreasureIcon16(u8 treasIdx, u8 destX, u8 destY)
+{
+	if (treasIdx >= 10)
+		return;
+
+	u16 srcX = (u16)treasIdx << 4;
+	u16 srcY = 256 + 64; // Y = 320 in VRAM Page 1
+	VDP_CommandHMMM(srcX, srcY, destX, destY, 16, 16);
+}
+
+//-----------------------------------------------------------------------------
+// Hardware-blit a 48x48 Dungeon Viewport Brick Background (0=Explore, 1=Combat) from VRAM Page 1 cache
+void Wiz_MapperBlitViewportBg48(bool isCombat, u8 destX, u8 destY)
+{
+	u16 srcX = isCombat ? 48 : 0;
+	u16 srcY = 256 + 80; // Y = 336 in VRAM Page 1
+	VDP_CommandHMMM(srcX, srcY, destX, destY, 48, 48);
 }
 
 //-----------------------------------------------------------------------------

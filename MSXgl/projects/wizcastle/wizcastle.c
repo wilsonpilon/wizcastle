@@ -11,6 +11,7 @@
 #include "dos.h"
 #include "src/wiz_hwcheck.h"
 #include "src/wiz_mapper.h"
+#include "src/wiz_video.h"
 
 //=============================================================================
 // MAIN ENTRY POINT
@@ -49,6 +50,11 @@ int main(char** argv, int argc)
 		if (key == 't' || key == 'T')
 		{
 			Wiz_RunHardwareVisualTest();
+			Wiz_ShowGraphicalDiagnostic();
+		}
+		else if (key == 'v' || key == 'V')
+		{
+			Wiz_VideoRunShowcase();
 			Wiz_ShowGraphicalDiagnostic();
 		}
 		else if (key == 's' || key == 'S')

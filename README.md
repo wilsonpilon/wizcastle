@@ -40,7 +40,11 @@ This **MSX2+ Enhanced Edition** preserves **100% gameplay compatibility** while 
 | :---: | :---: |
 | ![MSX2 SCREEN 7 Hardware Report](docs/images/msx2_hwcheck_screen7.png) | ![MSX1 SCREEN 2 Hardware Report](docs/images/msx1_hwcheck_screen2.png) |
 
-### 2. Interactive Visual & Audio Hardware Verification (`[T]` / `[S]` Keys)
+### 2. Phase 3 Video Engine Showcase (`[V]` Key) & Hardware Verification (`[T]` Key)
+
+| `v3.1` — `SCREEN 8` 6-Region UI Skeleton & VRAM Page 1 Cache | `WIZDATA.DAT` (`112 KB`) Memory Mapper Loader (`SCREEN 7`) |
+| :---: | :---: |
+| ![v3.1 SCREEN 8 UI Frame](docs/images/msx_v3_1_screen8_frame.png) | ![Mapper Loading Bar](docs/images/msx_mapper_loading.png) |
 
 | `SCREEN 12` Test (19,268 YJK Colors + PSG/FM/SCC Audio) | `SCREEN 8` Game UI Layout Mockup (256 GRB Colors) |
 | :---: | :---: |
@@ -84,7 +88,7 @@ wizcastle/
 │           ├── wizcastle.c         # Main entry point (DOS2 main)
 │           ├── tools/              # Asset conversion scripts (build_assets.ps1 -> WIZDATA.DAT)
 │           ├── emul/               # Bootable disk files, WIZDATA.DAT & DOS2_wizcastle.dsk
-│           └── src/                # Game modules (wiz_hwcheck, wiz_mapper, wiz_version)
+│           └── src/                # Game modules (wiz_hwcheck, wiz_mapper, wiz_video, wiz_version)
 ├── winwiz/                         # Reference C++ Port by Daniel D. Miller (CC0 1.0)
 ├── CHANGELOG.md                    # Complete X.Y Version & Build History
 ├── resume.txt                      # Multi-PC Development Handoff & Progress Summary

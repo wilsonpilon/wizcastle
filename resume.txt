@@ -1,7 +1,7 @@
 ================================================================================
  THE WIZARD'S CASTLE - MSX2+ DELUXE EDITION
  PROJECT HANDOFF & CONTINUATION SUMMARY (resume.txt)
- Last Updated: 2026-10-31 | Current Version: v2.1 (Phase 2 Mapper & Assets Done)
+ Last Updated: 2026-11-01 | Current Version: v3.1 (Phase 3 Step 1/7 Video Frame)
 ================================================================================
 
 1. PROJECT OVERVIEW & REPOSITORY
@@ -108,10 +108,15 @@
     buffered BDOS 2 reads (`push ix`/`pop ix`), `SCREEN 7` graphical loading
     bar, Page 2 (`0x8000-0xBFFF`) bank switching, VRAM Page 1 tile caching, and
     clean segment deallocation (`Wiz_MapperCleanup`) on exit to DOS.
-- PHASE 3 (`v3.x` — Video & Audio Engines):
-  1. Implement `src/wiz_video.c` (`SCREEN 12` screens + `SCREEN 8` main UI with
-     VRAM Page 1 tile/font cache, `HMMM` map/viewport blits, and `YMMM` hardware
-     scrolling message log).
+- PHASE 3 (`v3.x` — Video & Audio Engines — IN PROGRESS):
+  1. `src/wiz_video.c` (7 incremental steps, each with its own release):
+     - [x] `v3.1` (Step 1/7): `SCREEN 8` init, VRAM Page 1 cache (`Y=256..383`), and 6 beveled UI frames (`Wiz_VideoInitScreen8`, `Wiz_VideoDrawMainFrame`).
+     - [ ] `v3.2` (Step 2/7): `SCREEN 12` (19,268 YJK colors) Splash, Victory & Death event screens (`Wiz_VideoShowScreen12`).
+     - [ ] `v3.3` (Step 3/7): 10-Treasure Tray renderer (`Wiz_VideoUpdateTreasures`).
+     - [ ] `v3.4` (Step 4/7): `48x48` Room & Combat Viewport + `32x32` sprite + Monster HP bar (`Wiz_VideoUpdateViewport`).
+     - [ ] `v3.5` (Step 5/7): Character Status HUD & Curses panel (`Wiz_VideoUpdateHUD`).
+     - [ ] `v3.6` (Step 6/7): 8-Color `YMMM` Hardware-Scrolled Message Terminal (`Wiz_VideoPrintLog`).
+     - [ ] `v3.7` (Step 7/7): `8x8` Dungeon Map (`HMMM`) + V9958 Sprite Mode 2 Animated Cursor (`Wiz_VideoUpdateMap`).
   2. Implement `src/wiz_audio.c` (VBlank `H_TIMI` hook driving `LVGM` music +
      `ayFX` sound effects across PSG, MSX-MUSIC OPLL, and Konami SCC).
 - PHASE 4 (`v4.x` — Core Game Logic & Hybrid Rules):
